@@ -1,0 +1,36 @@
+# 忽略编译后的字节码文件
+target/
+*.class
+
+# 忽略前端依赖与构建产物
+**/node_modules/
+**/dist/
+**/coverage/
+**/.eslintcache
+**/vite.config.*.timestamp*
+
+# 忽略 IDEA 的配置文件
+.idea/
+*.iml
+
+# 忽略 VS Code 本地配置，但保留项目级共享配置
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/*.code-snippets
+
+# 忽略日志文件
+*.log
+
+# 忽略本地环境覆盖文件
+*.local
+.env.local
+.env.*.local
+
+# 忽略非 pnpm 锁文件
+package-lock.json
+yarn.lock
+
+# 忽略系统临时文件
+.DS_Store
+Thumbs.db
