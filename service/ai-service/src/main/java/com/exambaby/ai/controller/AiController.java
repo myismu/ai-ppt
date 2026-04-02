@@ -1,49 +1,57 @@
 package com.exambaby.ai.controller;
 
+import com.exambaby.ai.adapter.AiImageAdapter;
+import com.exambaby.ai.adapter.AiTextAdapter;
+import com.exambaby.ai.dto.AiWritingRequest;
+import com.exambaby.common.core.domain.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
-
-import java.time.Duration;
-import java.util.Map;
+import reactor.core.publisher.Mono;
 
 /**
- * AI 生成控制器
+ * AI 能力提供接口
  */
+@Slf4j
 @RestController
-@RequestMapping("/api/ai")
+@RequestMapping("/ai")
 public class AiController {
 
-    /**
-     * 生成大纲 (SSE 演示)
-     * 
-     * @param request 包含用户输入的主题等
-     * @return SSE 流
-     */
-    @PostMapping(value = "/generate-outline", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<String>> generateOutline(@RequestBody Map<String, Object> request) {
-        String topic = (String) request.getOrDefault("topic", "未设定主题");
-        
-        // 模拟 LLM 流式输出过程
-        String[] mockData = {
-            "正在为您生成关于 [" + topic + "] 的 PPT 大纲...",
-            "\n1. 介绍",
-            "\n2. 核心挑战",
-            "\n3. 解决方案",
-            "\n4. 结论",
-            "\n生成完成！"
-        };
+    private final AiTextAdapter aiTextAdapter;
+    private final AiImageAdapter aiImageAdapter;
 
-        return Flux.interval(Duration.ofMillis(500))
-                .take(mockData.length)
-                .map(index -> ServerSentEvent.<String>builder()
-                        .id(String.valueOf(index))
-                        .event("message")
-                        .data(mockData[index.intValue()])
-                        .build());
+    public AiController(@Qualifier("xiaomiMimoAdapter") AiTextAdapter aiTextAdapter,
+                        @Qualifier("doubaoImageAdapter") AiImageAdapter aiImageAdapter) {
+        this.aiTextAdapter = aiTextAdapter;
+        this.aiImageAdapter = aiImageAdapter;
+    }
+
+    /**
+     * 文本处理流式接口 (SSE)
+     * 对接小米 MIMO / Anthropic 协议
+     */
+    @PostMapping(value = "/writing", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> writing(@RequestBody AiWritingRequest request, org.springframework.http.server.reactive.ServerHttpResponse response) {
+        log.info("转发 AI 文本处理请求: {}, 类型: {}", request.getContent(), request.getType());
+        
+        // 禁用网关和 Nginx 的缓冲
+        response.getHeaders().add("X-Accel-Buffering", "no");
+        response.getHeaders().setCacheControl("no-cache");
+        Flux<String> stringFlux = aiTextAdapter.streamWriting(request);
+        log.info("返回 AI 响应: "+stringFlux);
+        return stringFlux;
+    }
+
+    /**
+     * AI 生图接口
+     * 对接豆包生图并中转 Base64 解决跨域问题
+     */
+    @PostMapping("/image")
+    public Mono<ApiResponse<String>> generateImage(@RequestBody com.exambaby.ai.dto.AiImageRequest request) {
+        log.info("转发 AI 生图请求: {}", request.getPrompt());
+        return aiImageAdapter.generateImage(request.getPrompt())
+                .map(ApiResponse::success);
     }
 }

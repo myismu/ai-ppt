@@ -1,0 +1,29 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ai-service
+
+  config:
+    import:
+      - nacos:${spring.application.name}.yaml?refresh=true
+
+  cloud:
+    nacos:
+      # 服务发现
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:a1e2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c}
+        group: DEFAULT_GROUP
+      # 配置中心 (Spring Cloud 2020+ 规范)
+      config:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:a1e2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+
+logging:
+  level:
+    com.exambaby.ai: DEBUG
+    org.springframework.web.reactive: DEBUG
