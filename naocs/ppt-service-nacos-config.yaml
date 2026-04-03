@@ -2,29 +2,72 @@
 # ppt-service.yaml (建议 Data ID: ppt-service.yaml, Group: DEFAULT_GROUP)
 # =========================================================================
 
-# 数据库配置
 spring:
+  # 1. 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # 建议此处根据你的本地 MySQL 调整，或通过系统环境变量 MYSQL_HOST, MYSQL_PWD 传入
     url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/ppt_service?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PWD:root}
 
-# MyBatis-Plus 配置
+  # 2. Redis 配置 (用于状态追踪、缓存及 Sentinel 动态规则)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: 0
+
+  # 3. Sentinel 熔断限流配置
+  cloud:
+    sentinel:
+      transport:
+        dashboard: ${SENTINEL_DASHBOARD:localhost:8858}
+      datasource:
+        flow:
+          nacos:
+            server-addr: ${NACOS_ADDR:localhost:8848}
+            namespace: ${NACOS_NAMESPACE:a1e2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c}
+            group-id: SENTINEL_GROUP
+            data-id: ${spring.application.name}-flow-rules
+            rule-type: flow
+            data-type: json
+
+    # 4. RocketMQ 异步消息通信
+    stream:
+      rocketmq:
+        binder:
+          name-server: ${ROCKETMQ_ADDR:127.0.0.1:9876}
+
+  # 5. Seata 分布式事务
+  seata:
+    enabled: true
+    application-id: ${spring.application.name}
+    tx-service-group: exam-bank-tx-group
+    service:
+      vgroup-mapping:
+        exam-bank-tx-group: default
+    registry:
+      type: nacos
+      nacos:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+
+# 6. MyBatis-Plus 基础配置
 mybatis-plus:
   configuration:
-    map-underscore-to-camel-case: true
+    map-underscore-to-camel-case: true # 驼峰命名
   global-config:
     db-config:
-      id-type: auto # 对应 ppt_template 的自增 ID，其他表由于没写 AUTO 默认使用雪花
+      id-type: auto # 主键自增
 
-# PPT 业务配置
+# 7. PPT 业务配置 (对接 AI 能力中心)
 ppt:
   ai:
-    # 指向 ai-service 的访问地址
-    base-url: ${AI_SERVICE_URL:http://localhost:8083}
+    # 此时 base-url 指向 Nacos 中注册的微服务名，而非具体端口
+    # RestTemplate 会通过 @LoadBalanced 进行负载均衡
+    base-url: ${AI_SERVICE_URL:http://ai-service}
 
-# 日志配置
+# 8. 日志审计与调试
 logging:
   level:
     com.exambaby.ppt.service: DEBUG
