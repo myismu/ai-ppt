@@ -1,0 +1,28 @@
+# ============================================================
+# PPT 服务 - 开发环境引导配置
+# ============================================================
+
+server:
+  port: 8084
+
+spring:
+  application:
+    name: ppt-service
+
+  config:
+    import:
+      # 从 Nacos 获取配置文件 (DataId: ppt-service.yaml, Group: DEFAULT_GROUP)
+      - nacos:${spring.application.name}.yaml?refresh=true
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:a1e2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c}
+        group: DEFAULT_GROUP
+      config:
+        server-addr: ${NACOS_ADDR:localhost:8848}
+        namespace: ${NACOS_NAMESPACE:a1e2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c}
+        group: DEFAULT_GROUP
+        file-extension: yaml
+        refresh-enabled: true

@@ -60,23 +60,158 @@
 
 ## 四、 数据库设计 (核心表)
 
-### 4.1 `ppt_project` (项目表)
-| 字段 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| id | bigint | 主键 |
-| user_id | bigint | 用户关联 ID |
-| title | varchar | 项目标题 |
-| cover_url | varchar | 封面缩略图 |
-| content_json | longtext | 存储 PPTist 标准的幻灯片数组 JSON |
-| status | tinyint | 0:草稿, 1:已完成 |
+为了配合微服务架构落地，数据库将根据服务模块进行拆分。
 
-### 4.2 `ppt_template` (模板表)
-| 字段 | 类型 | 说明 |
-| :--- | :--- | :--- |
-| id | bigint | 模板 ID |
-| name | varchar | 模板名称 |
-| category | varchar | 教育/商务/简约 |
-| data_json | longtext | 模板的标准元素定义 |
+### 4.1 `ppt-service` 库表设计
+
+#### 1. `ppt_project` (用户 PPT 项目主表)
+| 字段名 | 数据类型 | 约束/索引 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | bigint | 主键 | 项目唯一标识，建议雪花算法 |
+| `user_id` | bigint | 普通索引 | 归属用户 ID (关联用户中心) |
+| `title` | varchar(128) | - | PPT 标题 |
+| `cover_url` | varchar(512) | - | 封面图地址 |
+| `content_json` | longtext | - | 幻灯片完整 JSON 数据 (或者存 OSS URL) |
+| `status` | tinyint(1) | - | 状态: 0-草稿, 1-已发布, 2-已归档, -1-已删除 |
+| `create_time` | datetime | - | 创建时间 |
+| `update_time` | datetime | - | 更新时间 |
+
+#### 2. `ppt_template` (PPT 模板库表)
+| 字段名 | 数据类型 | 约束/索引 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | bigint | 主键 | 模板 ID |
+| `name` | varchar(64) | - | 模板名称 (如: 极简极夜黑) |
+| `category` | varchar(32) | 字典索引 | 类别标识 (business, education 等) |
+| `preview_url` | varchar(512) | - | 模板预览图 |
+| `data_json` | longtext | - | 模板标准元素定义 JSON |
+| `is_vip` | tinyint(1) | - | 是否付费/VIP 模板: 0-免费, 1-VIP |
+| `sort_order` | int | - | 排序权重 |
+
+#### 3. `ppt_material` (用户素材库表)
+| 字段名 | 数据类型 | 约束/索引 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | bigint | 主键 | 素材 ID |
+| `user_id` | bigint | 普通索引 | 用户 ID |
+| `type` | varchar(16) | - | 素材类型: image, audio, video |
+| `url` | varchar(512) | - | 资源实际地址 (OSS) |
+| `size` | int | - | 文件大小 (字节) |
+| `create_time` | datetime | - | 上传时间 |
+
+```
+-- ==========================================================
+-- 数据库: ppt_db (ppt-service 对应数据库)
+-- ==========================================================
+CREATE DATABASE IF NOT EXISTS `ppt_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `ppt_db`;
+
+-- 1. 用户 PPT 项目主表
+CREATE TABLE `ppt_project` (
+  `id` bigint(20) NOT NULL COMMENT '项目唯一标识，建议雪花算法',
+  `user_id` bigint(20) NOT NULL COMMENT '归属用户 ID (关联用户中心)',
+  `title` varchar(128) NOT NULL DEFAULT '未命名演示文稿' COMMENT 'PPT 标题',
+  `cover_url` varchar(512) DEFAULT NULL COMMENT '封面图地址',
+  `content_json` longtext COMMENT '幻灯片完整 JSON 数据',
+  `status` tinyint(2) NOT NULL DEFAULT '0' COMMENT '状态: 0-草稿, 1-已发布, 2-已归档, -1-已删除',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户 PPT 项目主表';
+
+-- 2. PPT 模板库表
+CREATE TABLE `ppt_template` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '模板 ID',
+  `name` varchar(64) NOT NULL COMMENT '模板名称 (如: 极简极夜黑)',
+  `category` varchar(32) NOT NULL COMMENT '类别标识 (business, education 等)',
+  `preview_url` varchar(512) DEFAULT NULL COMMENT '模板预览图 URL',
+  `file_url` varchar(512) NOT NULL COMMENT '模板标准元素定义 JSON 文件所在的 OSS/静态资源 URL',
+  `is_vip` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否付费/VIP 模板: 0-免费, 1-VIP',
+  `sort_order` int(11) NOT NULL DEFAULT '0' COMMENT '排序权重',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='PPT 模板库表';
+
+-- 3. 用户素材库表
+CREATE TABLE `ppt_material` (
+  `id` bigint(20) NOT NULL COMMENT '素材 ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户 ID',
+  `type` varchar(16) NOT NULL COMMENT '素材类型: image, audio, video',
+  `url` varchar(512) NOT NULL COMMENT '资源实际地址 (OSS)',
+  `size` int(11) NOT NULL DEFAULT '0' COMMENT '文件大小 (字节)',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户素材库表';
+
+```
+
+
+
+### 4.2 `ai-service` 库表设计
+
+#### 1. `ai_generation_record` (AI 调用统计与审计表)
+| 字段名 | 数据类型 | 约束/索引 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | bigint | 主键 | 记录 ID |
+| `user_id` | bigint | 普通索引 | 用户 ID |
+| `task_type` | varchar(32) | - | 任务类型: outline, content, polish, draw |
+| `prompt` | text | - | 用户输入的原始指令 |
+| `model_used` | varchar(32) | - | 使用的模型 (如 mimo-v2-pro) |
+| `tokens_consumed`| int | - | 消耗的 Token 数量 (用于成本核算) |
+| `status` | tinyint(1) | - | 状态: 0-失败, 1-成功 |
+| `create_time` | datetime | 普通索引 | 调用时间 |
+
+#### 2. `ai_prompt_template` (系统内置提示词表)
+| 字段名 | 数据类型 | 约束/索引 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `id` | bigint | 主键 | 提示词 ID |
+| `scene_code` | varchar(32) | 唯一索引 | 场景编码 (如: outline_gen, img_prompt_enhance) |
+| `system_prompt` | text | - | 系统级人设指令 |
+| `user_prompt` | text | - | 用户输入模板 (含 ${变量} 占位符) |
+| `is_active` | tinyint(1) | - | 是否启用 |
+
+
+
+```
+-- ==========================================================
+-- 数据库: ai_db (ai-service 对应数据库)
+-- ==========================================================
+CREATE DATABASE IF NOT EXISTS `ai_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `ai_db`;
+
+-- 1. AI 调用统计与审计表
+CREATE TABLE `ai_generation_record` (
+  `id` bigint(20) NOT NULL COMMENT '记录 ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户 ID',
+  `task_type` varchar(32) NOT NULL COMMENT '任务类型: outline, content, polish, draw',
+  `prompt` text NOT NULL COMMENT '用户输入的原始指令',
+  `model_used` varchar(32) NOT NULL COMMENT '使用的模型 (如 mimo-v2-pro)',
+  `tokens_consumed` int(11) NOT NULL DEFAULT '0' COMMENT '消耗的 Token 数量 (用于成本核算)',
+  `status` tinyint(2) NOT NULL DEFAULT '1' COMMENT '状态: 0-失败, 1-成功',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '调用时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI 调用统计与审计表';
+
+-- 2. 系统内置提示词表
+CREATE TABLE `ai_prompt_template` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '提示词 ID',
+  `scene_code` varchar(32) NOT NULL COMMENT '场景编码 (如: outline_gen, img_prompt_enhance)',
+  `system_prompt` text COMMENT '系统级人设指令',
+  `user_prompt` text NOT NULL COMMENT '用户输入模板 (含 ${变量} 占位符)',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否启用: 0-禁用, 1-启用',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_scene_code` (`scene_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统内置提示词表';
+
+```
+
+
 
 ---
 

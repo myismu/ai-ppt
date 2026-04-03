@@ -1,0 +1,31 @@
+# =========================================================================
+# ppt-service.yaml (建议 Data ID: ppt-service.yaml, Group: DEFAULT_GROUP)
+# =========================================================================
+
+# 数据库配置
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/ppt_service?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:root}
+
+# MyBatis-Plus 配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto # 对应 ppt_template 的自增 ID，其他表由于没写 AUTO 默认使用雪花
+
+# PPT 业务配置
+ppt:
+  ai:
+    # 指向 ai-service 的访问地址
+    base-url: ${AI_SERVICE_URL:http://localhost:8083}
+
+# 日志配置
+logging:
+  level:
+    com.exambaby.ppt.service: DEBUG
+    org.springframework.jdbc.datasource: DEBUG
