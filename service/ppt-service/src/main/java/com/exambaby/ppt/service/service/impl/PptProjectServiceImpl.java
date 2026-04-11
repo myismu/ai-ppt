@@ -129,15 +129,23 @@ public class PptProjectServiceImpl extends ServiceImpl<PptProjectMapper, PptProj
     }
 
     @Override
-    public List<PptProjectVO> listProjects(Long userId) {
-        // 查询用户的非删除项目，按更新时间倒序
+    public List<PptProjectVO> listProjects(Long userId, Integer status) {
+        // 查询用户的项目，按更新时间倒序
         LambdaQueryWrapper<PptProject> wrapper = new LambdaQueryWrapper<PptProject>()
                 .select(PptProject::getId, PptProject::getTitle, PptProject::getCoverUrl,
                         PptProject::getSlideCount, PptProject::getStatus,
                         PptProject::getCreateTime, PptProject::getUpdateTime)
-                .eq(PptProject::getUserId, userId)
-                .ne(PptProject::getStatus, -1)
-                .orderByDesc(PptProject::getUpdateTime);
+                .eq(PptProject::getUserId, userId);
+        
+        if (status != null && status == -1) {
+            // 查询回收站
+            wrapper.eq(PptProject::getStatus, -1);
+        } else {
+            // 查询常规项目 (排除已删除)
+            wrapper.ne(PptProject::getStatus, -1);
+        }
+        
+        wrapper.orderByDesc(PptProject::getUpdateTime);
 
         return this.list(wrapper).stream().map(project ->
                 PptProjectVO.builder()
@@ -161,10 +169,37 @@ public class PptProjectServiceImpl extends ServiceImpl<PptProjectMapper, PptProj
         // 逻辑删除: 设置 status = -1
         project.setStatus(-1);
         project.setUpdateTime(LocalDateTime.now());
-
-        // 可选：同时删除 file-service 中的项目文件
-        // fileServiceClient.deleteProjectFiles(String.valueOf(projectId));
-
         return this.updateById(project);
+    }
+
+    @Override
+    public boolean restoreProject(Long userId, Long projectId) {
+        PptProject project = this.getById(projectId);
+        if (project == null || !project.getUserId().equals(userId)) {
+            return false;
+        }
+        // 恢复项目: 设置 status = 0 (草稿)
+        project.setStatus(0);
+        project.setUpdateTime(LocalDateTime.now());
+        return this.updateById(project);
+    }
+
+    @Override
+    public boolean hardDeleteProject(Long userId, Long projectId) {
+        PptProject project = this.getById(projectId);
+        if (project == null || !project.getUserId().equals(userId)) {
+            return false;
+        }
+        
+        // 1. 调用 file-service 清理静态资源
+        try {
+            fileServiceClient.deleteProjectFiles(String.valueOf(projectId));
+        } catch (Exception e) {
+            log.error("彻底删除项目时清理文件失败, projectId: {}", projectId, e);
+            // 继续执行数据库删除，或者根据业务需求抛出异常
+        }
+
+        // 2. 物理删除数据库记录
+        return this.removeById(projectId);
     }
 }

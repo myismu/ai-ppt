@@ -40,9 +40,10 @@ public interface PptProjectService extends IService<PptProject> {
     /**
      * 获取用户的项目列表（不含 contentJson 大字段）
      * @param userId 用户 ID
+     * @param status 状态过滤 (-1 表示已删除项目，null 或其他表示常规项目)
      * @return 项目列表
      */
-    List<PptProjectVO> listProjects(Long userId);
+    List<PptProjectVO> listProjects(Long userId, Integer status);
 
     /**
      * 删除项目（逻辑删除，设置 status = -1）
@@ -51,4 +52,20 @@ public interface PptProjectService extends IService<PptProject> {
      * @return 是否成功
      */
     boolean deleteProject(Long userId, Long projectId);
+
+    /**
+     * 恢复项目（设置 status = 0）
+     * @param userId 用户 ID
+     * @param projectId 项目 ID
+     * @return 是否成功
+     */
+    boolean restoreProject(Long userId, Long projectId);
+
+    /**
+     * 永久物理删除项目及其静态资源
+     * @param userId 用户 ID
+     * @param projectId 项目 ID
+     * @return 是否成功
+     */
+    boolean hardDeleteProject(Long userId, Long projectId);
 }

@@ -31,6 +31,7 @@ public class PptTemplateServiceImpl extends ServiceImpl<PptTemplateMapper, PptTe
             vo.setName(template.getName());
             vo.setCategory(template.getCategory());
             vo.setCoverUrl(template.getPreviewUrl());
+            vo.setFileUrl(template.getFileUrl());
             return vo;
         }).collect(Collectors.toList());
     }

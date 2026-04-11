@@ -26,6 +26,8 @@ public class PptTemplateVO implements Serializable {
 
     private String coverUrl;
 
+    private String fileUrl;
+
     private String styleKey;
 
     private String description;

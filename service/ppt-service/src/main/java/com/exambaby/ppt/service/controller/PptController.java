@@ -65,14 +65,15 @@ public class PptController {
 
     /**
      * 获取用户的 PPT 项目列表
-     * 返回不含 contentJson 大字段的轻量列表，按更新时间倒序
+     * 支持可选的状态过滤
      * 
+     * @param status 状态过滤，-1 表示回收站
      * @return 项目列表
      */
     @GetMapping("/ppt/list")
-    public Result<List<PptProjectVO>> list() {
+    public Result<List<PptProjectVO>> list(@RequestParam(required = false) Integer status) {
         Long userId = resolveUserId();
-        return Result.success(pptProjectService.listProjects(userId));
+        return Result.success(pptProjectService.listProjects(userId, status));
     }
 
     /**
@@ -93,7 +94,7 @@ public class PptController {
     }
 
     /**
-     * 删除 PPT 项目（逻辑删除）
+     * 逻辑删除 PPT 项目（移至回收站）
      * 
      * @param id 项目 ID
      * @return 是否删除成功
@@ -102,6 +103,32 @@ public class PptController {
     public Result<Boolean> delete(@PathVariable Long id) {
         Long userId = resolveUserId();
         boolean success = pptProjectService.deleteProject(userId, id);
+        return Result.success(success);
+    }
+
+    /**
+     * 恢复 PPT 项目
+     * 
+     * @param id 项目 ID
+     * @return 是否恢复成功
+     */
+    @PutMapping("/ppt/restore/{id}")
+    public Result<Boolean> restore(@PathVariable Long id) {
+        Long userId = resolveUserId();
+        boolean success = pptProjectService.restoreProject(userId, id);
+        return Result.success(success);
+    }
+
+    /**
+     * 永久物理删除 PPT 项目及其文件
+     * 
+     * @param id 项目 ID
+     * @return 是否彻底删除成功
+     */
+    @DeleteMapping("/ppt/hardDelete/{id}")
+    public Result<Boolean> hardDelete(@PathVariable Long id) {
+        Long userId = resolveUserId();
+        boolean success = pptProjectService.hardDeleteProject(userId, id);
         return Result.success(success);
     }
 
