@@ -6,7 +6,7 @@ ai:
   # 小米 MIMO / Anthropic 文本接口配置
   xiaomi:
     api-key: "sk-c8gqs6afg0bsp6frkpz0ksq1q2ulk8ars5wvwol86d4bfvhb"
-    base-url: "https://api.xiaomimimo.com/anthropic" # 恢复为 .env 原始地址
+    base-url: "https://api.xiaomimimo.com/anthropic/v1/messages" # 补全接口路径
     anthropic-version: "2023-06-01"
     model: "mimo-v2-flash"
 

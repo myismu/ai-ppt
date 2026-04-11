@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
         log.warn("文件上传大小超限: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body(Map.of("code", 413, "message", "上传文件太大，请不要超过1MB"));
+                .body(Map.of("code", 413, "message", "上传文件太大，不可超过服务器限制"));
     }
 
     /**

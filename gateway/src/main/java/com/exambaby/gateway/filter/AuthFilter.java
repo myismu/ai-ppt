@@ -120,7 +120,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
             "/api/public/questionBank/getAllPublicQuestionBanks",
             "/api/public/questionBank/getPublicQuestionBankById",
             "/api/public/questions/getQuestionsByPage",
-            "/img/", // 静态资源路径
+            "/img/",        // 静态资源：用户上传图片
+            "/image/",      // 静态资源：AI 生成图片
+            "/templates/",  // 静态资源：PPT 模板 JSON 及预览图
+            "/projects/",   // 静态资源：PPT 项目 JSON 文件
             "/api/seata/test/rollback" // 测试 Seata 分布式事务
     );
 

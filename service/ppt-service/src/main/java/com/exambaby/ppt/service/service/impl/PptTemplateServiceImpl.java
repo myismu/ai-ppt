@@ -10,9 +10,19 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * PPT 模板服务实现类
+ * 提供 PPT 模板列表查询功能
+ */
 @Service
 public class PptTemplateServiceImpl extends ServiceImpl<PptTemplateMapper, PptTemplate> implements PptTemplateService {
 
+    /**
+     * 获取所有模板列表
+     * 从数据库查询所有模板，转换为前端需要的 VO 对象
+     * 
+     * @return 模板列表
+     */
     @Override
     public List<PptTemplateVO> listTemplates() {
         return this.list().stream().map(template -> {
@@ -21,8 +31,6 @@ public class PptTemplateServiceImpl extends ServiceImpl<PptTemplateMapper, PptTe
             vo.setName(template.getName());
             vo.setCategory(template.getCategory());
             vo.setCoverUrl(template.getPreviewUrl());
-            // Since the original PptTemplateVO had styleKey and description, I'll map them if needed.
-            // But let's keep it simple as the entity has previewUrl and dataJson.
             return vo;
         }).collect(Collectors.toList());
     }

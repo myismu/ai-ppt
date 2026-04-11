@@ -36,7 +36,15 @@ spring:
             - id: question-bank-service
               uri: lb://question-bank-service
               predicates:
-                - Path=/api/public/**,/api/file/**,/api/admin/**
+                - Path=/api/public/**,/api/admin/**
+              filters:
+                - StripPrefix=1
+
+            # ==================== 独立文件服务路由 (新增) ====================
+            - id: file-service
+              uri: lb://file-service
+              predicates:
+                - Path=/api/file/**
               filters:
                 - StripPrefix=1
 
@@ -48,9 +56,34 @@ spring:
               filters:
                 - StripPrefix=1
 
-            # ==================== 静态资源路由 ====================
-            - id: static-resources
-              uri: lb://question-bank-service
+            # ==================== PPT 服务路由 (新增) ====================
+            - id: ppt-service
+              uri: lb://ppt-service
+              predicates:
+                - Path=/api/ppt/**
+              filters:
+                - StripPrefix=1
+                - name: AddResponseHeader
+                  args:
+                    name: X-Accel-Buffering
+                    value: "no"
+
+            # ==================== PPT 工具接口路由 (兼容前端 /tools 路径) ====================
+            - id: ppt-tools
+              uri: lb://ppt-service
+              predicates:
+                - Path=/api/tools/**
+              filters:
+                - StripPrefix=1
+                - name: AddResponseHeader
+                  args:
+                    name: X-Accel-Buffering
+                    value: "no"
+
+            # ==================== 静态资源路由 (统一走 file-service) ====================
+            # 用户上传图片：/img/**
+            - id: static-img
+              uri: lb://file-service
               predicates:
                 - Path=/img/**
               filters:
@@ -58,6 +91,39 @@ spring:
                   args:
                     name: Cache-Control
                     value: "public, max-age=86400"
+
+            # AI 生成图片 / PPT 插图：/image/**
+            - id: static-image
+              uri: lb://file-service
+              predicates:
+                - Path=/image/**
+              filters:
+                - name: AddResponseHeader
+                  args:
+                    name: Cache-Control
+                    value: "public, max-age=86400"
+
+            # PPT 模板 JSON 及预览图：/templates/**
+            - id: static-templates
+              uri: lb://file-service
+              predicates:
+                - Path=/templates/**
+              filters:
+                - name: AddResponseHeader
+                  args:
+                    name: Cache-Control
+                    value: "public, max-age=86400"
+
+            # PPT 项目文件（JSON 内容、资源文件）：/projects/**
+            - id: static-projects
+              uri: lb://file-service
+              predicates:
+                - Path=/projects/**
+              filters:
+                - name: AddResponseHeader
+                  args:
+                    name: Cache-Control
+                    value: "no-cache"
 
           # ==================== 全局跨域配置 ====================
           globalcors:

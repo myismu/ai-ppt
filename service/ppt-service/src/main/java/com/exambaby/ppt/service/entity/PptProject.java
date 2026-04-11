@@ -38,9 +38,24 @@ public class PptProject implements Serializable {
     private String coverUrl;
 
     /**
-     * 幻灯片完整 JSON 数据 (或者存 OSS URL)
+     * 关联模板 ID（可为空，表示未使用模板）
      */
-    private String contentJson;
+    private Long templateId;
+
+    /**
+     * 幻灯片 JSON 文件路径 (存储在 file-service，如 /projects/{id}/content.json)
+     */
+    private String contentUrl;
+
+    /**
+     * 主题资源 JSON 文件路径 (存储在 file-service，如 /projects/{id}/theme.json)
+     */
+    private String themeUrl;
+
+    /**
+     * 幻灯片页数（冗余字段，列表展示时无需解析 contentJson）
+     */
+    private Integer slideCount;
 
     /**
      * 状态: 0-草稿, 1-已发布, 2-已归档, -1-已删除

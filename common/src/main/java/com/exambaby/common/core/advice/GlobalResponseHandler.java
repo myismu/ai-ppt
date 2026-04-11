@@ -1,6 +1,7 @@
 package com.exambaby.common.core.advice;
 
 import com.exambaby.common.core.domain.ApiResponse;
+import com.exambaby.common.core.result.Result;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
@@ -80,7 +81,7 @@ public class GlobalResponseHandler implements ResponseBodyAdvice<Object> {
             return body;
         }
         
-        if (body instanceof ApiResponse || body instanceof ResponseEntity) {
+        if (body instanceof ApiResponse || body instanceof Result || body instanceof ResponseEntity) {
             return body;
         }
 

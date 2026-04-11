@@ -19,7 +19,7 @@ public class PptTemplate implements Serializable {
     /**
      * 模板 ID
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

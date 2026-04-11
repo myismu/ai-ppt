@@ -15,7 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 豆包 (火山引擎) 生图适配器
+ * 豆包（火山引擎）生图适配器
+ * 实现图片生成接口，支持将生成的图片转换为 Base64 格式
  */
 @Slf4j
 @Service("doubaoImageAdapter")
@@ -31,6 +32,13 @@ public class DoubaoImageAdapter implements AiImageAdapter {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 生成图片
+     * 调用豆包生图 API，下载生成的图片并转换为 Base64 格式
+     * 
+     * @param prompt 图片描述提示词
+     * @return Base64 编码的图片数据（data:image/png;base64,xxx）或原始 URL
+     */
     @Override
     public Mono<String> generateImage(String prompt) {
         log.info("调用豆包生图接口，提示词: {}", prompt);
@@ -51,16 +59,18 @@ public class DoubaoImageAdapter implements AiImageAdapter {
     }
 
     /**
-     * 提取图片 URL 并下载转为 Base64
+     * 提取图片 URL 并下载转换为 Base64
+     * 从豆包 API 响应中提取图片 URL，下载图片并编码为 Base64
+     * 
+     * @param response 豆包 API 的 JSON 响应
+     * @return Base64 编码的图片数据或原始 URL
      */
     private Mono<String> extractImageUrlAndDownload(String response) {
         try {
             JsonNode node = objectMapper.readTree(response);
-            // 豆包 API 返回结构通常在 data[0].url
             String imageUrl = node.get("data").get(0).get("url").asText();
             log.info("提取到生图 URL: {}, 开始下载...", imageUrl);
 
-            // 【关键修复】使用全新的 WebClient 下载，避免携带任何 Authorization 等 Header
             return WebClient.create().get()
                     .uri(imageUrl)
                     .retrieve()

@@ -7,9 +7,9 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 建议此处根据你的本地 MySQL 调整，或通过系统环境变量 MYSQL_HOST, MYSQL_PWD 传入
-    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/ppt_service?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/ppt_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
     username: ${MYSQL_USER:root}
-    password: ${MYSQL_PWD:root}
+    password: ${MYSQL_PWD:YOUR_DB_PASSWORD_HERE}
 
   # 2. Redis 配置 (用于状态追踪、缓存及 Sentinel 动态规则)
   data:
@@ -38,27 +38,29 @@ spring:
       rocketmq:
         binder:
           name-server: ${ROCKETMQ_ADDR:127.0.0.1:9876}
-
-  # 5. Seata 分布式事务
-  seata:
-    enabled: true
-    application-id: ${spring.application.name}
-    tx-service-group: exam-bank-tx-group
-    service:
-      vgroup-mapping:
-        exam-bank-tx-group: default
-    registry:
-      type: nacos
-      nacos:
-        server-addr: ${NACOS_ADDR:localhost:8848}
+# ==================== Seata 分布式事务配置 ====================
+seata:
+  enabled: true
+  application-id: ${spring.application.name}
+  tx-service-group: exam-bank-tx-group
+  data-source-proxy-mode: AT
+  service:
+    vgroup-mapping:
+      exam-bank-tx-group: default
+  registry:
+    type: file
+  config:
+    type: nacos
+    nacos:
+      server-addr: ${NACOS_ADDR:localhost:8848}
+      namespace: ${NACOS_NAMESPACE:a1e2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c}
+      group: SEATA_GROUP
+      data-id: seata.properties
 
 # 6. MyBatis-Plus 基础配置
 mybatis-plus:
   configuration:
-    map-underscore-to-camel-case: true # 驼峰命名
-  global-config:
-    db-config:
-      id-type: auto # 主键自增
+    map-underscore-to-camel-case: true
 
 # 7. PPT 业务配置 (对接 AI 能力中心)
 ppt:
@@ -66,9 +68,16 @@ ppt:
     # 此时 base-url 指向 Nacos 中注册的微服务名，而非具体端口
     # RestTemplate 会通过 @LoadBalanced 进行负载均衡
     base-url: ${AI_SERVICE_URL:http://ai-service}
+  # 文件上传根路径（本地文件系统绝对路径）
+  upload:
+    path: E:/demo/question-bank-cloud/service/ppt-service/upload/
 
 # 8. 日志审计与调试
 logging:
   level:
     com.exambaby.ppt.service: DEBUG
     org.springframework.jdbc.datasource: DEBUG
+# JWT 配置
+jwt:
+  secret: YOUR_JWT_SECRET_HERE
+  expiration: 86400000

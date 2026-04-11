@@ -18,8 +18,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 小米 MIMO (Anthropic Messages 协议) 适配器
- * 稳健版：支持标准 SSE 解析与错误追踪
+ * 小米 MIMO 适配器
+ * 实现 Anthropic Messages 协议的文本生成接口
+ * 支持流式响应，自动解析 SSE 格式
  */
 @Slf4j
 @Service("xiaomiMimoAdapter")
@@ -35,21 +36,25 @@ public class XiaomiMimoAdapter implements AiTextAdapter {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * 流式生成文本
+     * 根据请求类型构建系统提示词，调用小米 MIMO API 并返回流式响应
+     * 
+     * 支持的类型：
+     * - polish: 文案润色
+     * - expand: 内容扩写
+     * - summarize: 摘要提取
+     * - translate: 翻译
+     * 
+     * @param request 文本处理请求
+     * @return 文本流，每个元素为一个 token
+     */
     @Override
     public Flux<String> streamWriting(AiWritingRequest request) {
         log.info("开始调用 AI 接口: {}, 类型: {}", aiProperties.getXiaomi().getBaseUrl(), request.getType());
 
-        // 1. 构建系统提示词
-        String systemPrompt = "你是一个 PPT 生成专家，擅长将普通文本转换为结构化的、逻辑清晰的内容。";
-        if ("polish".equals(request.getType())) {
-            systemPrompt += "请对用户提供的文本进行润色，使其更加专业、精炼。";
-        } else if ("expand".equals(request.getType())) {
-            systemPrompt += "请对用户提供的文本进行扩写，增加细节和论据。";
-        } else if ("summarize".equals(request.getType())) {
-            systemPrompt += "请对用户提供的文本进行摘要。";
-        }
+        String systemPrompt = buildSystemPrompt(request.getType());
 
-        // 2. 构建请求体 (Anthropic 协议)
         Map<String, Object> body = new HashMap<>();
         body.put("model", aiProperties.getXiaomi().getModel());
         body.put("system", systemPrompt);
@@ -58,11 +63,20 @@ public class XiaomiMimoAdapter implements AiTextAdapter {
         
         Map<String, String> userMessage = new HashMap<>();
         userMessage.put("role", "user");
-        userMessage.put("content", request.getContent() + (request.getInstruction() != null ? "\n指令: " + request.getInstruction() : ""));
+        
+        String content = request.getContent();
+        String instruction = request.getInstruction();
+        
+        if (content == null || content.isBlank()) {
+            userMessage.put("content", instruction != null ? instruction : "");
+        } else if (instruction == null || instruction.isBlank()) {
+            userMessage.put("content", content);
+        } else {
+            userMessage.put("content", content + "\n\n" + instruction);
+        }
         
         body.put("messages", Collections.singletonList(userMessage));
 
-        // 3. 发起请求并使用 ServerSentEvent 自动解析
         return webClient.post()
                 .uri(aiProperties.getXiaomi().getBaseUrl())
                 .header("x-api-key", aiProperties.getXiaomi().getApiKey())
@@ -74,23 +88,50 @@ public class XiaomiMimoAdapter implements AiTextAdapter {
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {})
                 .flatMap(event -> {
                     String data = event.data();
-                    if (data == null || data.isEmpty() || data.contains("message_stop")) {
+                    if (data == null || data.isEmpty()) {
                         return Flux.empty();
                     }
-                    return Flux.just(parseJsonDelta(data));
+                    String delta = parseJsonDelta(data);
+                    return delta.isEmpty() ? Flux.empty() : Flux.just(delta);
                 })
-                .filter(content -> !content.isEmpty())
                 .doOnTerminate(() -> log.info("AI 流生成结束"))
                 .doOnError(e -> log.error("AI 服务调用异常: ", e));
     }
 
     /**
+     * 根据类型构建系统提示词
+     * 
+     * @param type 处理类型
+     * @return 系统提示词
+     */
+    private String buildSystemPrompt(String type) {
+        if (type == null || type.isBlank()) {
+            return "你是一个专业的 AI 助手，请根据用户的要求完成任务。";
+        }
+        return switch (type) {
+            case "polish" -> "你是一个文案润色专家，请对用户提供的文本进行优化，使其更加专业、精炼。";
+            case "expand" -> "你是一个内容扩写专家，请对用户提供的文本进行扩写，增加细节、论据和逻辑深度。";
+            case "summarize" -> "你是一个精炼的摘要专家，请对用户提供的文本进行核心要点提取。";
+            default -> "你是一个专业的 AI 助手，请根据用户的要求完成任务。";
+        };
+    }
+
+    /**
      * 解析 Anthropic 协议中的 JSON 增量
+     * 从 SSE 事件的 data 字段中提取文本内容
+     * 
+     * Anthropic 协议格式：
+     * {
+     *   "type": "content_block_delta",
+     *   "delta": { "text": "实际内容" }
+     * }
+     * 
+     * @param jsonStr JSON 字符串
+     * @return 提取的文本内容，无法解析则返回空字符串
      */
     private String parseJsonDelta(String jsonStr) {
         try {
             JsonNode node = objectMapper.readTree(jsonStr);
-            // 兼容多种 delta 结构
             if (node.has("type") && "content_block_delta".equals(node.get("type").asText())) {
                 return node.get("delta").get("text").asText();
             } else if (node.has("delta") && node.get("delta").has("text")) {

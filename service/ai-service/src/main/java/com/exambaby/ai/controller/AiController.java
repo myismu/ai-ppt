@@ -12,7 +12,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * AI 能力提供接口
+ * AI 能力提供控制器
+ * 提供文本处理（流式）和图片生成接口
+ * 对接小米 MIMO（文本）和豆包（图片）等 AI 服务
  */
 @Slf4j
 @RestController
@@ -29,24 +31,37 @@ public class AiController {
     }
 
     /**
-     * 文本处理流式接口 (SSE)
-     * 对接小米 MIMO / Anthropic 协议
+     * 文本处理流式接口
+     * 支持润色、扩写、摘要、翻译等操作，以 SSE 格式返回流式响应
+     * 
+     * SSE 格式说明：
+     * - 每个 token 作为独立的 SSE 事件返回
+     * - 前端需要解析 "data:" 前缀获取实际内容
+     * 
+     * @param request 文本处理请求，包含内容、类型、指令等
+     * @param response HTTP 响应对象，用于设置响应头
+     * @return 文本流，每个元素为一个 token
      */
     @PostMapping(value = "/writing", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> writing(@RequestBody AiWritingRequest request, org.springframework.http.server.reactive.ServerHttpResponse response) {
-        log.info("转发 AI 文本处理请求: {}, 类型: {}", request.getContent(), request.getType());
+        log.info("接收到 AI 文本处理请求: 类型={}, 内容长度={}", request.getType(), 
+                request.getContent() != null ? request.getContent().length() : 0);
         
-        // 禁用网关和 Nginx 的缓冲
         response.getHeaders().add("X-Accel-Buffering", "no");
         response.getHeaders().setCacheControl("no-cache");
-        Flux<String> stringFlux = aiTextAdapter.streamWriting(request);
-        log.info("返回 AI 响应: "+stringFlux);
-        return stringFlux;
+        response.getHeaders().setConnection(java.util.Collections.singletonList("keep-alive"));
+        
+        return aiTextAdapter.streamWriting(request)
+                .doOnError(e -> log.error("AI 写作流处理异常: {}", e.getMessage()))
+                .doOnTerminate(() -> log.info("AI 写作流处理结束"));
     }
 
     /**
      * AI 生图接口
-     * 对接豆包生图并中转 Base64 解决跨域问题
+     * 根据提示词生成图片，返回 Base64 编码的图片数据或图片 URL
+     * 
+     * @param request 生图请求，包含提示词
+     * @return 图片 URL 或 Base64 数据
      */
     @PostMapping("/image")
     public Mono<ApiResponse<String>> generateImage(@RequestBody com.exambaby.ai.dto.AiImageRequest request) {
