@@ -68,8 +68,11 @@ ppt:
     # 此时 base-url 指向 Nacos 中注册的微服务名，而非具体端口
     # RestTemplate 会通过 @LoadBalanced 进行负载均衡
     base-url: ${AI_SERVICE_URL:http://ai-service}
+  # 文件上传根路径（本地文件系统绝对路径）
+  upload:
+    path: E:/demo/question-bank-cloud/service/ppt-service/upload/
 
-  # 8. 日志审计与调试
+# 8. 日志审计与调试
 logging:
   level:
     com.exambaby.ppt.service: DEBUG

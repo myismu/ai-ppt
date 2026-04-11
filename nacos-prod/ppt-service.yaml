@@ -1,0 +1,29 @@
+# =========================================================================
+# (Production) ppt-service.yaml 
+# =========================================================================
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:3306/ppt_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PWD:your_production_password}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+  cloud:
+    stream:
+      rocketmq:
+        binder:
+          name-server: ${ROCKETMQ_ADDR:rocketmq:9876}
+
+ppt:
+  ai:
+    base-url: ${AI_SERVICE_URL:http://ai-service}
+
+logging:
+  level:
+    com.exambaby.ppt.service: INFO
