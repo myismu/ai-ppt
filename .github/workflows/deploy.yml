@@ -1,0 +1,36 @@
+name: AI-PPT Production Deploy
+
+on:
+  push:
+    branches: [ "main" ] # 监听 main 分支的提交
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build Backend with Maven
+      run: mvn clean package -DskipTests
+
+    - name: Deploy to Server via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}     # 服务器 IP，需在 GitHub Secrets 中配置
+        username: ${{ secrets.SERVER_USER }} # 服务器用户名
+        key: ${{ secrets.SERVER_SSH_KEY }}   # SSH 私钥
+        port: 22
+        script: |
+          cd /path/to/your/project/question-bank-cloud
+          git pull origin main
+          # 确保后端 JAR 包已同步或在服务器重新构建（本脚本采用在流水线构建并同步的方式更佳，此处为简化流程）
+          docker-compose up -d --build
+          docker image prune -f # 清理旧镜像

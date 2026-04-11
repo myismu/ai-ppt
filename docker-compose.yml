@@ -1,0 +1,113 @@
+version: '3.8'
+
+services:
+  # ==================== 前端服务 ====================
+  ai-ppt-web:
+    build:
+      context: ./Web/AI-PPT
+      dockerfile: Dockerfile
+    container_name: ai-ppt-web
+    ports:
+      - "80:80"
+    depends_on:
+      - gateway
+      - file-service
+    networks:
+      - qb-network
+
+  # ==================== 后端微服务 ====================
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - NACOS_ADDR=nacos:8848
+    depends_on:
+      - nacos
+    networks:
+      - qb-network
+
+  ppt-service:
+    build:
+      context: ./service/ppt-service
+      dockerfile: Dockerfile
+    container_name: ppt-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - NACOS_ADDR=nacos:8848
+      - MYSQL_HOST=mysql
+      - REDIS_HOST=redis
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - qb-network
+
+  ai-service:
+    build:
+      context: ./service/ai-service
+      dockerfile: Dockerfile
+    container_name: ai-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - NACOS_ADDR=nacos:8848
+      - REDIS_HOST=redis
+    depends_on:
+      - nacos
+      - redis
+    networks:
+      - qb-network
+
+  file-service:
+    build:
+      context: ./service/file-service
+      dockerfile: Dockerfile
+    container_name: file-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - NACOS_ADDR=nacos:8848
+      - FILE_BASE_DIR=/data/upload
+    volumes:
+      - ./data/upload:/data/upload # 核心：将生成的项目、图片、模板持久化到宿主机
+    depends_on:
+      - nacos
+    networks:
+      - qb-network
+
+  # ==================== 中间件 (生产建议独立部署，此处为单机全量演示) ====================
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: nacos
+    environment:
+      - MODE=standalone
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    networks:
+      - qb-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      - MYSQL_DATABASE=ppt_db
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - qb-network
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    networks:
+      - qb-network
+
+networks:
+  qb-network:
+    driver: bridge
