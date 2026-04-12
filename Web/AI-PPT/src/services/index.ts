@@ -155,6 +155,11 @@ export default {
     })
   },
 
+  // 删除已上传的资源文件
+  deleteProjectAsset(url: string): Promise<any> {
+    return axios.delete(`${SERVER_URL}/file/deleteImage?url=${encodeURIComponent(url)}`)
+  },
+
   // 获取用户项目列表
   listProjects(status?: number): Promise<any> {
     return axios.get(`${SERVER_URL}/ppt/list`, { params: { status } })

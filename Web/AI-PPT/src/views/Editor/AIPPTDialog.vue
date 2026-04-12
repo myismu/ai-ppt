@@ -206,8 +206,12 @@ const handleFileUpload = async (files: FileList) => {
   if (!files.length) return
   const file = files[0]
   uploading.value = true
+  
+  // 优先使用当前项目ID，如果不存在则使用临时目录 temp_doc
+  const targetId = slidesStore.projectId || 'temp_doc'
+
   try {
-    const res = await api.uploadProjectAsset('temp_doc', file)
+    const res = await api.uploadProjectAsset(targetId, file)
     if (res.code === 200 && res.data) {
       // 移除 '/projects/' 前缀，适配后端 AiService 的基础路径拼接
       uploadedFileUrl.value = res.data.replace(/^\/projects\//, '')
@@ -224,9 +228,20 @@ const handleFileUpload = async (files: FileList) => {
   }
 }
 
-const removeUploadedFile = () => {
-  uploadedFileUrl.value = ''
-  uploadedFileName.value = ''
+const removeUploadedFile = async () => {
+  if (!uploadedFileUrl.value) return
+  
+  try {
+    // 还原完整的 URL 路径进行删除
+    const fullUrl = '/projects/' + uploadedFileUrl.value
+    await api.deleteProjectAsset(fullUrl)
+  } catch (err) {
+    console.error('删除服务器文件失败:', err)
+  } finally {
+    // 无论后端删除成功与否，前端均清空状态
+    uploadedFileUrl.value = ''
+    uploadedFileName.value = ''
+  }
 }
 
 onMounted(() => {
