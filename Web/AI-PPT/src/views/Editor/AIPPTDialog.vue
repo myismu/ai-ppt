@@ -15,6 +15,9 @@
           <span class="status-dot pulsing"></span>
           <span class="status-text">处理中...</span>
         </div>
+        <div class="close-btn" @click="close()" title="关闭">
+          <i-icon-park-outline:close />
+        </div>
       </div>
 
       <!-- 终端主体内容区 (可滚动) -->
@@ -33,29 +36,41 @@
               placeholder="例如：2025年人工智能教育应用白皮书"
               @keydown.enter="createOutline()"
             />
+            <FileInput accept=".pdf,.doc,.docx" @change="handleFileUpload">
+              <div class="upload-btn" :class="{ 'is-uploading': uploading }" title="上传参考文档（PDF/Word）">
+                <i-icon-park-outline:paperclip /> {{ uploading ? '上传中...' : '参考文档' }}
+              </div>
+            </FileInput>
             <div class="run-btn" @click="createOutline()">
               <i-icon-park-outline:send /> 立即启动
             </div>
+          </div>
+          
+          <div v-if="uploadedFileName" class="uploaded-file-info">
+            <i-icon-park-outline:file-doc class="icon" /> 已上传参考资料: <span>{{ uploadedFileName }}</span>
+            <i-icon-park-outline:close-small class="remove-btn" @click="removeUploadedFile" title="移除" />
           </div>
 
           <div class="config-grid">
             <div class="config-row">
               <span class="label">语言:</span>
               <div class="options">
-                <span v-for="l in ['中文', 'English', '日本語']" :key="l" 
+                <span v-for="l in languages" :key="l" 
                   :class="['opt', { active: language === l }]" @click="language = l">{{ l }}</span>
               </div>
             </div>
             <div class="config-row">
               <span class="label">模型:</span>
               <div class="options">
-                <span class="opt active">Xiaomi MiLM</span>
+                <span v-for="m in models" :key="m.id" 
+                  :class="['opt', { active: modelId === m.id }]" 
+                  @click="modelId = m.id">{{ m.provider ? m.provider.toUpperCase() : 'AI引擎' }}<span v-if="m.modelName" style="font-size:10px;opacity:0.6;"> ({{m.modelName}})</span></span>
               </div>
             </div>
             <div class="config-row">
               <span class="label">风格:</span>
               <div class="options">
-                <span v-for="s in ['通用', '学术风', '职场风', '营销风']" :key="s" 
+                <span v-for="s in styles" :key="s" 
                   :class="['opt', { active: style === s }]" @click="style = s">{{ s }}</span>
               </div>
             </div>
@@ -150,6 +165,7 @@ import message from '@/utils/message'
 import { decrypt } from '@/utils/crypto'
 import { useMainStore, useSlidesStore, useAiStore } from '@/store'
 import OutlineEditor from '@/components/OutlineEditor.vue'
+import FileInput from '@/components/FileInput.vue'
 
 const emit = defineEmits<{
   (e: 'update:show', value: boolean): void
@@ -173,17 +189,89 @@ const loading = ref(false)
 const outlineCreating = ref(false)
 const overwrite = ref(true)
 const step = ref<'setup' | 'outline' | 'template'>('setup')
-const model = ref('xiaomi-model')
+const modelId = ref<number>()
+const models = ref<any[]>([])
+const languages = ref<string[]>(['中文', 'English', '日本語'])
+const styles = ref<string[]>(['通用', '学术风', '职场风', '营销风'])
+const recommends = ref<string[]>(['2025科技前沿动态', '大数据如何改变世界', '餐饮市场调查研究', 'AIGC在教育领域的应用', '社交媒体品牌营销', '年度工作总结展望'])
+
+const uploadedFileUrl = ref('')
+const uploadedFileName = ref('')
+const uploading = ref(false)
 
 const scrollContainer = ref<HTMLElement | null>(null)
 const inputRef = useTemplateRef<HTMLInputElement>('inputRef')
 
-const recommends = ['2025科技前沿动态', '大数据如何改变世界', '餐饮市场调查研究', 'AIGC在教育领域的应用', '社交媒体品牌营销', '年度工作总结展望']
+const handleFileUpload = async (files: FileList) => {
+  if (!files.length) return
+  const file = files[0]
+  uploading.value = true
+  try {
+    const res = await api.uploadProjectAsset('temp_doc', file)
+    if (res.code === 200 && res.data) {
+      // 移除 '/projects/' 前缀，适配后端 AiService 的基础路径拼接
+      uploadedFileUrl.value = res.data.replace(/^\/projects\//, '')
+      uploadedFileName.value = file.name
+      message.success('文档上传成功')
+    } else {
+      message.error(res.msg || '上传失败')
+    }
+  } catch (err) {
+    console.error(err)
+    message.error('上传出错')
+  } finally {
+    uploading.value = false
+  }
+}
+
+const removeUploadedFile = () => {
+  uploadedFileUrl.value = ''
+  uploadedFileName.value = ''
+}
 
 onMounted(() => {
   setTimeout(() => inputRef.value?.focus(), 500)
   fetchCloudTemplates()
+  fetchAiModels()
+  fetchConfigOptions()
 })
+
+const fetchConfigOptions = async () => {
+  try {
+    const res = await api.getConfigOptions()
+    if (res.code === 200 && res.data) {
+      if (res.data.language?.length) {
+        languages.value = res.data.language
+        language.value = languages.value[0]
+      }
+      if (res.data.style?.length) {
+        styles.value = res.data.style
+        style.value = styles.value[0]
+      }
+      if (res.data.recommend?.length) {
+        recommends.value = res.data.recommend
+      }
+    }
+  } catch (err) {
+    console.error('获取配置选项失败，使用默认值:', err)
+  }
+}
+
+const fetchAiModels = async () => {
+  try {
+    const res = await api.getAiModels('text')
+    if (res.code === 200 && res.data) {
+      models.value = res.data
+      if (models.value.length > 0) {
+        // Find default or first
+        const def = models.value.find((m: any) => m.isDefault === 1)
+        modelId.value = def ? def.id : models.value[0].id
+      }
+    }
+  } catch (err) {
+    console.error('获取大模型列表失败:', err)
+  }
+}
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -203,13 +291,16 @@ const fetchCloudTemplates = async () => {
   try {
     const res = await api.getTemplates()
     if (res.code === 200 && res.data) {
-      const cloudTemplates = res.data.map((item: any) => ({
-        id: item.styleKey || `cloud_${item.id}`,
-        name: item.name,
-        cover: item.coverUrl,
-        fileUrl: item.fileUrl || item.file_url, // 修复点：兼容后端不同命名的文件路径
-        origin: '后端预置'
-      }))
+      const cloudTemplates = res.data.map((item: any) => {
+        const fileUrl = item.fileUrl || item.file_url || ''
+        return {
+          id: fileUrl || `cloud_${item.id}`, // 优先使用 fileUrl 作为唯一标识
+          name: item.name,
+          cover: item.coverUrl,
+          fileUrl,
+          origin: '后端预置'
+        }
+      })
       slidesStore.setTemplates(cloudTemplates)
     }
   } catch (err) {
@@ -236,13 +327,19 @@ const handleOutlineLine = (line: string) => {
 }
 
 const createOutline = async () => {
-  if (!keyword.value) return message.error('请输入主题')
+  if (!keyword.value && !uploadedFileUrl.value) return message.error('请输入主题或上传参考文档')
   outlineCreating.value = true
   aiStore.reset()
   outline.value = '' 
   step.value = 'outline'
 
-  const stream = await api.AIPPT_Outline({ content: keyword.value, language: language.value, model: model.value })
+  let stream: any
+  if (uploadedFileUrl.value) {
+    stream = await api.DocumentToPPT({ prompt: keyword.value, fileUrl: uploadedFileUrl.value, modelId: modelId.value })
+  } else {
+    stream = await api.AIPPT_Outline({ content: keyword.value, language: language.value, modelId: modelId.value })
+  }
+
   if (typeof stream === 'object' && stream.state === -1) {
     outlineCreating.value = false
     step.value = 'setup'
@@ -254,7 +351,7 @@ const createOutline = async () => {
   let lineBuffer = ''
   
   const readStream = () => {
-    reader.read().then(({ done, value }) => {
+    reader.read().then(({ done, value }: any) => {
       if (done) {
         if (lineBuffer.trim()) handleOutlineLine(lineBuffer.trim())
         outline.value = getMdContent(outline.value).replace(/<!--[\s\S]*?-->/g, '')
@@ -271,13 +368,13 @@ const createOutline = async () => {
   readStream()
 }
 
-const handlePptLine = (line: string, templateSlides: Slide[]) => {
+const handlePptLine = (line: string, templateSlides: Slide[], styleKey: string) => {
   try {
     const data = JSON.parse(line)
     if (data.type === 'status') aiStore.addLog(data.content)
     else if (data.data) {
-      // 传递 selectedTemplate.value (即 ID) 以保持元数据持久化逻辑不变
-      AIPPT(templateSlides, [data], selectedTemplate.value, img.value)
+      // 传递 fetchPath (即模板文件路径) 作为 styleKey，确保换布局时可以正确请求模板数据
+      AIPPT(templateSlides, [data], styleKey, img.value)
     }
   } catch (e) {}
 }
@@ -296,7 +393,7 @@ const createPPT = async () => {
   const fetchPath = currentTemplate?.fileUrl || (currentTemplate as any)?.file_url || selectedTemplate.value
   console.log('AI-PPT: final fetchPath =', fetchPath)
 
-  const stream = await api.AIPPT({ content: outline.value, language: language.value, style: style.value, model: model.value })
+  const stream = await api.AIPPT({ content: outline.value, language: language.value, style: style.value, modelId: modelId.value })
   const templateData = await api.getTemplateData(fetchPath)
   const templateSlides = templateData.slides
 
@@ -305,9 +402,9 @@ const createPPT = async () => {
   let lineBuffer = ''
   
   const readStream = () => {
-    reader.read().then(({ done, value }) => {
+    reader.read().then(({ done, value }: any) => {
       if (done) {
-        if (lineBuffer.trim()) handlePptLine(lineBuffer.trim(), templateSlides)
+        if (lineBuffer.trim()) handlePptLine(lineBuffer.trim(), templateSlides, fetchPath)
         loading.value = false
         setTimeout(() => {
           aiStore.setGenerating(false)
@@ -318,7 +415,7 @@ const createPPT = async () => {
       lineBuffer += decoder.decode(value, { stream: true })
       const lines = lineBuffer.split('\n')
       lineBuffer = lines.pop() || ''
-      for (const line of lines) { if (line.trim()) handlePptLine(line.trim(), templateSlides) }
+      for (const line of lines) { if (line.trim()) handlePptLine(line.trim(), templateSlides, fetchPath) }
       readStream()
     })
   }
@@ -381,6 +478,15 @@ const close = () => mainStore.setAIPPTDialogState(false)
     .status-dot { width: 10px; height: 10px; background: $themeColor; border-radius: 50%; }
     .status-text { font-size: 11px; font-weight: 900; }
   }
+
+  .close-btn {
+    width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: #999; font-size: 16px;
+    transition: all 0.2s ease;
+    margin-left: 12px;
+    &:hover { background: rgba(0, 0, 0, 0.08); color: #333; }
+  }
 }
 
 .terminal-main {
@@ -441,7 +547,7 @@ const close = () => mainStore.setAIPPTDialogState(false)
 .setup-view {
   .welcome-msg { color: #444; margin-bottom: 25px; font-size: 16px; font-weight: 500; }
   .input-wrapper {
-    display: flex; align-items: center; gap: 20px; margin-bottom: 40px;
+    display: flex; align-items: center; gap: 20px; margin-bottom: 15px;
     .prompt { color: $themeColor; font-weight: 900; font-size: 24px; }
     .terminal-input {
       flex: 1; background: transparent; border: none; outline: none;
@@ -450,11 +556,25 @@ const close = () => mainStore.setAIPPTDialogState(false)
       padding: 10px 0;
       &:focus { border-bottom-color: $themeColor; }
     }
+    .upload-btn {
+      background: rgba($themeColor, 0.1); color: $themeColor; padding: 12px 20px; border-radius: 10px;
+      cursor: pointer; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+      &:hover { background: rgba($themeColor, 0.2); }
+      &.is-uploading { opacity: 0.7; cursor: not-allowed; }
+    }
     .run-btn {
       background: $themeColor; color: #fff; padding: 12px 28px; border-radius: 10px;
       cursor: pointer; font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px;
       &:hover { background: $themeHoverColor; }
     }
+  }
+  .uploaded-file-info {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666; margin-bottom: 30px;
+    background: #f8f9fa; padding: 10px 15px; border-radius: 8px; border: 1px solid #eee; width: fit-content;
+    .icon { color: $themeColor; font-size: 16px; }
+    span { font-weight: 600; color: #333; }
+    .remove-btn { cursor: pointer; color: #999; margin-left: 10px; font-size: 16px; transition: color 0.2s; &:hover { color: #ff5f56; } }
   }
   .config-grid {
     display: flex; flex-direction: column; gap: 20px; margin-bottom: 40px;
