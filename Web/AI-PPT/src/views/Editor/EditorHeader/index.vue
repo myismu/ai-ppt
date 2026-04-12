@@ -98,13 +98,13 @@
         </button>
         <button class="btn-ai-v2" @click="openAIPPTDialog()">
           <i-icon-park-outline:magic />
-          <span>AI 续写/生成</span>
+          <span>AIPPT智能创作</span>
         </button>
         <button class="btn-icon primary" v-tooltip="'导出'" @click="setDialogForExport('pptx')">
           <i-icon-park-outline:download />
         </button>
-        <button class="btn-icon danger" v-tooltip="'退出'" @click="handleLogout()">
-          <i-icon-park-outline:logout />
+        <button class="btn-icon secondary" v-tooltip="'返回工作台'" @click="goBackToProjects()">
+          <i-icon-park-outline:home />
         </button>
       </div>
     </div>
@@ -124,10 +124,10 @@ import { storeToRefs } from 'pinia'
 import { useMainStore, useSlidesStore } from '@/store'
 import useImport from '@/hooks/useImport'
 import useSlideHandler from '@/hooks/useSlideHandler'
+import useCoverCapture from '@/hooks/useCoverCapture'
 import { downloadAITemplate } from '@/utils/aiTemplateParser'
 import type { DialogForExportTypes } from '@/types/export'
 import api from '@/services'
-import authApi from '@/services/auth'
 import message from '@/utils/message'
 import { useUserStore } from '@/store/user'
 import { useRouter } from 'vue-router'
@@ -148,6 +148,7 @@ const router = useRouter()
 const { title, saveStatus } = storeToRefs(slidesStore)
 const { importSpecificFile, importPPTXFile, importJSON, exporting } = useImport()
 const { resetSlides } = useSlideHandler()
+const { captureAndSaveCover } = useCoverCapture()
 
 const mainMenuVisible = ref(false)
 const hotkeyDrawerVisible = ref(false)
@@ -180,7 +181,12 @@ const openMarkupPanel = () => mainStore.setMarkupPanelState(true)
 
 const exportAITemplate = () => {
   if (slidesStore.slides.length === 0) return
-  const fullData = { slides: slidesStore.slides, theme: slidesStore.theme, width: slidesStore.width, height: slidesStore.height }
+  const fullData = { 
+    slides: slidesStore.slides, 
+    theme: slidesStore.theme, 
+    width: slidesStore.width, 
+    height: slidesStore.height 
+  }
   downloadAITemplate(fullData, titleValue.value || '自定义AI模板')
 }
 
@@ -195,11 +201,14 @@ const handleCloudSave = async () => {
       id: currentProjectId, title: title.value,
       contentJson: JSON.stringify(slidesStore.slides),
       themeJson: JSON.stringify(slidesStore.theme),
+      refDocuments: JSON.stringify(slidesStore.refDocuments),
       slideCount: slidesStore.slides.length,
     })
     if (res.code === 200) {
       slidesStore.setSaveStatus('saved')
       message.success('云端已同步')
+      // 异步截取第一页作为封面（不阻塞主保存流程）
+      captureAndSaveCover(currentProjectId).catch(() => {})
     } else {
       slidesStore.setSaveStatus('unsaved')
       message.error(res.message || '保存失败')
@@ -212,11 +221,7 @@ const handleCloudSave = async () => {
 
 const goBackToProjects = () => router.push('/dashboard')
 
-const handleLogout = async () => {
-  try { await authApi.outLogin() } catch (e) {}
-  userStore.logout()
-  router.replace('/login')
-}
+
 </script>
 
 <style lang="scss" scoped>

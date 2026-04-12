@@ -98,6 +98,15 @@ public class PptProjectServiceImpl extends ServiceImpl<PptProjectMapper, PptProj
         if (request.getSlideCount() != null) {
             project.setSlideCount(request.getSlideCount());
         }
+        // 更新封面图路径（由前端截图上传后传入）
+        if (request.getCoverUrl() != null) {
+            project.setCoverUrl(request.getCoverUrl());
+        }
+        
+        // 更新参考文档（由前端上传后传入）
+        if (request.getRefDocuments() != null) {
+            project.setRefDocuments(request.getRefDocuments());
+        }
 
         project.setUpdateTime(LocalDateTime.now());
         return this.updateById(project);
@@ -121,6 +130,7 @@ public class PptProjectServiceImpl extends ServiceImpl<PptProjectMapper, PptProj
                 .templateId(project.getTemplateId())
                 .contentUrl(project.getContentUrl())
                 .themeUrl(project.getThemeUrl())
+                .refDocuments(project.getRefDocuments())
                 .slideCount(project.getSlideCount())
                 .status(project.getStatus())
                 .createTime(project.getCreateTime())
@@ -133,7 +143,7 @@ public class PptProjectServiceImpl extends ServiceImpl<PptProjectMapper, PptProj
         // 查询用户的项目，按更新时间倒序
         LambdaQueryWrapper<PptProject> wrapper = new LambdaQueryWrapper<PptProject>()
                 .select(PptProject::getId, PptProject::getTitle, PptProject::getCoverUrl,
-                        PptProject::getSlideCount, PptProject::getStatus,
+                        PptProject::getSlideCount, PptProject::getIsStar, PptProject::getStatus,
                         PptProject::getCreateTime, PptProject::getUpdateTime)
                 .eq(PptProject::getUserId, userId);
         
@@ -153,6 +163,7 @@ public class PptProjectServiceImpl extends ServiceImpl<PptProjectMapper, PptProj
                         .title(project.getTitle())
                         .coverUrl(project.getCoverUrl())
                         .slideCount(project.getSlideCount())
+                        .isStar(project.getIsStar())
                         .status(project.getStatus())
                         .createTime(project.getCreateTime())
                         .updateTime(project.getUpdateTime())
@@ -201,5 +212,44 @@ public class PptProjectServiceImpl extends ServiceImpl<PptProjectMapper, PptProj
 
         // 2. 物理删除数据库记录
         return this.removeById(projectId);
+    }
+
+    @Override
+    public Integer toggleStar(Long userId, Long projectId) {
+        PptProject project = this.getById(projectId);
+        if (project == null || !project.getUserId().equals(userId)) {
+            return null;
+        }
+        // 翻转收藏状态: 0 → 1, 1 → 0
+        int newStar = (project.getIsStar() != null && project.getIsStar() == 1) ? 0 : 1;
+        project.setIsStar(newStar);
+        project.setUpdateTime(LocalDateTime.now());
+        this.updateById(project);
+        return newStar;
+    }
+
+    @Override
+    public List<PptProjectVO> listStarredProjects(Long userId) {
+        LambdaQueryWrapper<PptProject> wrapper = new LambdaQueryWrapper<PptProject>()
+                .select(PptProject::getId, PptProject::getTitle, PptProject::getCoverUrl,
+                        PptProject::getSlideCount, PptProject::getIsStar, PptProject::getStatus,
+                        PptProject::getCreateTime, PptProject::getUpdateTime)
+                .eq(PptProject::getUserId, userId)
+                .eq(PptProject::getIsStar, 1)
+                .ne(PptProject::getStatus, -1)
+                .orderByDesc(PptProject::getUpdateTime);
+
+        return this.list(wrapper).stream().map(project ->
+                PptProjectVO.builder()
+                        .id(project.getId())
+                        .title(project.getTitle())
+                        .coverUrl(project.getCoverUrl())
+                        .slideCount(project.getSlideCount())
+                        .isStar(project.getIsStar())
+                        .status(project.getStatus())
+                        .createTime(project.getCreateTime())
+                        .updateTime(project.getUpdateTime())
+                        .build()
+        ).collect(Collectors.toList());
     }
 }

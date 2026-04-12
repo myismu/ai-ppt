@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS `ppt_project` (
   `template_id` bigint(20) DEFAULT NULL COMMENT '关联模板 ID（可为空，表示未使用模板）',
   `content_url` varchar(512) DEFAULT NULL COMMENT '幻灯片 JSON 文件路径 (存储在 file-service，如 /projects/{id}/content.json)',
   `theme_url` varchar(512) DEFAULT NULL COMMENT '主题配置 JSON 文件路径',
+  `ref_documents` text DEFAULT NULL COMMENT '参考文档（JSON 数组，包含 name 和 url）',
   `slide_count` int(11) DEFAULT '0' COMMENT '幻灯片页数',
+  `is_star` tinyint(1) DEFAULT '0' COMMENT '是否收藏: 0-否, 1-是',
   `status` tinyint(1) DEFAULT '0' COMMENT '状态: 0-草稿, 1-已发布, 2-已归档, -1-已删除',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -62,7 +64,42 @@ INSERT INTO `ppt_template` (`id`, `name`, `category`, `preview_url`, `file_url`,
 (1900000000000000008, '浅蓝小清新',   'education', '/templates/preview/template_8.webp', '/templates/template_8.json', 0, 8),
 (1900000000000000009, '自定义测试模板', 'other',     '/templates/preview/template_9.webp', '/templates/template_9.json', 0, 9);
 
--- 4. undo_log (Seata AT 模式回滚日志表)
+-- 4. ppt_config_option (PPT 创作引擎配置选项表)
+CREATE TABLE IF NOT EXISTS `ppt_config_option` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
+  `category` varchar(32) NOT NULL COMMENT '配置分类: language / style / recommend',
+  `label` varchar(128) NOT NULL COMMENT '展示文案',
+  `sort_order` int(11) DEFAULT '0' COMMENT '排序权重 (越大越靠前)',
+  `is_active` tinyint(1) DEFAULT '1' COMMENT '是否启用: 1-是, 0-否',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='PPT 创作引擎配置选项表';
+
+-- 语言选项
+INSERT INTO `ppt_config_option` (`category`, `label`, `sort_order`) VALUES
+('language', '中文', 100),
+('language', 'English', 90),
+('language', '日本語', 80);
+
+-- 风格选项
+INSERT INTO `ppt_config_option` (`category`, `label`, `sort_order`) VALUES
+('style', '通用', 100),
+('style', '学术风', 90),
+('style', '职场风', 80),
+('style', '营销风', 70);
+
+-- 启发式主题推荐
+INSERT INTO `ppt_config_option` (`category`, `label`, `sort_order`) VALUES
+('recommend', '2025科技前沿动态', 100),
+('recommend', '大数据如何改变世界', 90),
+('recommend', '餐饮市场调查研究', 80),
+('recommend', 'AIGC在教育领域的应用', 70),
+('recommend', '社交媒体品牌营销', 60),
+('recommend', '年度工作总结展望', 50);
+
+-- 5. undo_log (Seata AT 模式回滚日志表)
 CREATE TABLE IF NOT EXISTS `undo_log` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `branch_id` bigint(20) NOT NULL,

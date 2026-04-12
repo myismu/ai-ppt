@@ -46,9 +46,11 @@
             </div>
           </div>
           
-          <div v-if="uploadedFileName" class="uploaded-file-info">
-            <i-icon-park-outline:file-doc class="icon" /> 已上传参考资料: <span>{{ uploadedFileName }}</span>
-            <i-icon-park-outline:close-small class="remove-btn" @click="removeUploadedFile" title="移除" />
+          <div v-if="slidesStore.refDocuments && slidesStore.refDocuments.length > 0" class="uploaded-file-list">
+            <div v-for="doc in slidesStore.refDocuments" :key="doc.url" class="uploaded-file-info">
+              <i-icon-park-outline:file-doc class="icon" /> 已上传参考资料: <span>{{ doc.name }}</span>
+              <i-icon-park-outline:close-small class="remove-btn" @click="removeUploadedFile(doc.url)" title="移除" />
+            </div>
           </div>
 
           <div class="config-grid">
@@ -195,8 +197,6 @@ const languages = ref<string[]>(['中文', 'English', '日本語'])
 const styles = ref<string[]>(['通用', '学术风', '职场风', '营销风'])
 const recommends = ref<string[]>(['2025科技前沿动态', '大数据如何改变世界', '餐饮市场调查研究', 'AIGC在教育领域的应用', '社交媒体品牌营销', '年度工作总结展望'])
 
-const uploadedFileUrl = ref('')
-const uploadedFileName = ref('')
 const uploading = ref(false)
 
 const scrollContainer = ref<HTMLElement | null>(null)
@@ -214,8 +214,16 @@ const handleFileUpload = async (files: FileList) => {
     const res = await api.uploadProjectAsset(targetId, file)
     if (res.code === 200 && res.data) {
       // 移除 '/projects/' 前缀，适配后端 AiService 的基础路径拼接
-      uploadedFileUrl.value = res.data.replace(/^\/projects\//, '')
-      uploadedFileName.value = file.name
+      const fileUrl = res.data.replace(/^\/projects\//, '')
+      const fileName = file.name
+      slidesStore.setRefDocuments([
+        ...slidesStore.refDocuments,
+        { name: fileName, url: fileUrl }
+      ])
+      // 触发自动保存，持久化该字段
+      mainStore.setAIPPTDialogState('running') // 借助状态触发watch (虽然有点hack，但最简单的是直接调保存)
+      setTimeout(() => mainStore.setAIPPTDialogState(true), 0)
+      
       message.success('文档上传成功')
     } else {
       message.error(res.msg || '上传失败')
@@ -228,19 +236,20 @@ const handleFileUpload = async (files: FileList) => {
   }
 }
 
-const removeUploadedFile = async () => {
-  if (!uploadedFileUrl.value) return
+const removeUploadedFile = async (url: string) => {
+  if (!url) return
   
   try {
     // 还原完整的 URL 路径进行删除
-    const fullUrl = '/projects/' + uploadedFileUrl.value
+    const fullUrl = '/projects/' + url
     await api.deleteProjectAsset(fullUrl)
   } catch (err) {
     console.error('删除服务器文件失败:', err)
   } finally {
-    // 无论后端删除成功与否，前端均清空状态
-    uploadedFileUrl.value = ''
-    uploadedFileName.value = ''
+    // 前端清空状态
+    slidesStore.setRefDocuments(
+      slidesStore.refDocuments.filter(doc => doc.url !== url)
+    )
   }
 }
 
@@ -342,15 +351,18 @@ const handleOutlineLine = (line: string) => {
 }
 
 const createOutline = async () => {
-  if (!keyword.value && !uploadedFileUrl.value) return message.error('请输入主题或上传参考文档')
+  const hasRefDoc = slidesStore.refDocuments && slidesStore.refDocuments.length > 0
+  if (!keyword.value && !hasRefDoc) return message.error('请输入主题或上传参考文档')
   outlineCreating.value = true
   aiStore.reset()
   outline.value = '' 
   step.value = 'outline'
 
   let stream: any
-  if (uploadedFileUrl.value) {
-    stream = await api.DocumentToPPT({ prompt: keyword.value, fileUrl: uploadedFileUrl.value, modelId: modelId.value })
+  if (hasRefDoc) {
+    // 简单拼接所有文档的文件路径传给后端
+    const fileUrls = slidesStore.refDocuments.map(doc => doc.url).join(',')
+    stream = await api.DocumentToPPT({ prompt: keyword.value, fileUrl: fileUrls, modelId: modelId.value })
   } else {
     stream = await api.AIPPT_Outline({ content: keyword.value, language: language.value, modelId: modelId.value })
   }

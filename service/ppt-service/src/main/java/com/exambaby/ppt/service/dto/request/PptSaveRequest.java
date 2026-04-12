@@ -30,6 +30,11 @@ public class PptSaveRequest implements Serializable {
     private String contentJson;
 
     /**
+     * 参考文档（JSON 数组：[{name: '...', url: '...'}]）
+     */
+    private String refDocuments;
+
+    /**
      * 主题配置 JSON (SlideTheme 序列化)
      */
     private String themeJson;
@@ -38,4 +43,9 @@ public class PptSaveRequest implements Serializable {
      * 幻灯片页数
      */
     private Integer slideCount;
+
+    /**
+     * 封面图路径（可选，由前端自动截图上传后传入）
+     */
+    private String coverUrl;
 }

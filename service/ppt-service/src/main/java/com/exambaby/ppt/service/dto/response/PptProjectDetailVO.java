@@ -53,6 +53,11 @@ public class PptProjectDetailVO implements Serializable {
     private String themeUrl;
 
     /**
+     * 参考文档（JSON 数组：[{name: '...', url: '...'}]）
+     */
+    private String refDocuments;
+
+    /**
      * 幻灯片页数
      */
     private Integer slideCount;

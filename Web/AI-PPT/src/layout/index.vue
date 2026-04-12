@@ -9,7 +9,7 @@
 import { onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
-import { useMainStore, useSnapshotStore, useSlidesStore } from '@/store'
+import { useMainStore, useSnapshotStore, useSlidesStore, useAiStore } from '@/store'
 import { LOCALSTORAGE_KEY_DISCARDED_DB } from '@/configs/storage'
 import { deleteDiscardedDB } from '@/utils/database'
 import api from '@/services'
@@ -19,8 +19,10 @@ const route = useRoute()
 const mainStore = useMainStore()
 const slidesStore = useSlidesStore()
 const snapshotStore = useSnapshotStore()
+const aiStore = useAiStore()
 const { slides, theme, title, projectId, saveStatus } = storeToRefs(slidesStore)
 const { databaseId } = storeToRefs(mainStore)
+const { isGenerating } = storeToRefs(aiStore)
 
 // 自动保存的 debounce 定时器
 let saveTimer: ReturnType<typeof setTimeout> | null = null
@@ -37,6 +39,17 @@ const loadProject = async (id: string) => {
       const project = res.data
       slidesStore.setProjectId(project.id)
       slidesStore.setTitle(project.title || '未命名演示文稿')
+      
+      // 加载参考文档记录
+      if (project.refDocuments) {
+        try {
+          slidesStore.setRefDocuments(JSON.parse(project.refDocuments))
+        } catch(e) {
+          console.error('加载参考文档失败', e)
+        }
+      } else {
+        slidesStore.setRefDocuments([])
+      }
 
       // 获取主题数据
       let themeData
@@ -103,7 +116,7 @@ const doAutoSave = async () => {
  * 触发延迟自动保存（3 秒 debounce）
  */
 const triggerAutoSave = () => {
-  if (!projectId.value) return
+  if (!projectId.value || isGenerating.value) return
   slidesStore.setSaveStatus('unsaved')
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(doAutoSave, 3000)
@@ -111,7 +124,7 @@ const triggerAutoSave = () => {
 
 // 监听幻灯片和主题变化，触发自动保存
 watch(
-  () => [JSON.stringify(slides.value), JSON.stringify(theme.value), title.value],
+  () => [JSON.stringify(slides.value), JSON.stringify(theme.value), title.value, isGenerating.value],
   () => {
     triggerAutoSave()
   },

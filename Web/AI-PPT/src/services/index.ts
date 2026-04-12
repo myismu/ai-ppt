@@ -140,6 +140,7 @@ export default {
     title?: string
     contentJson?: string
     themeJson?: string
+    refDocuments?: string
     slideCount?: number
     coverUrl?: string
   }): Promise<any> {

@@ -37,9 +37,19 @@ public class PptProjectVO implements Serializable {
     private String coverUrl;
 
     /**
+     * 参考文档（JSON 数组：[{name: '...', url: '...'}]）
+     */
+    private String refDocuments;
+
+    /**
      * 幻灯片页数
      */
     private Integer slideCount;
+
+    /**
+     * 是否收藏
+     */
+    private Integer isStar;
 
     /**
      * 状态: 0-草稿, 1-已发布, 2-已归档

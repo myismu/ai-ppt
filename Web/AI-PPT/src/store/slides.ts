@@ -28,6 +28,7 @@ export interface SlidesState {
   templates: SlideTemplate[]
   projectId: number | null       // 当前打开的项目 ID
   saveStatus: 'saved' | 'saving' | 'unsaved' // 保存状态
+  refDocuments: { name: string; url: string }[] // 参考文档列表
 }
 
 export const useSlidesStore = defineStore('slides', {
@@ -57,11 +58,20 @@ export const useSlidesStore = defineStore('slides', {
     templates: [], // 模板数据由后端提供
     projectId: null,      // 当前项目 ID
     saveStatus: 'saved',  // 初始状态为已保存
+    refDocuments: [],     // 参考文档列表
   }),
 
   getters: {
     currentSlide(state) {
       return state.slides[state.slideIndex]
+    },
+
+    width(state) {
+      return state.viewportSize
+    },
+
+    height(state) {
+      return state.viewportSize * state.viewportRatio
     },
   
     currentSlideAnimations(state) {
@@ -114,6 +124,10 @@ export const useSlidesStore = defineStore('slides', {
 
     setProjectId(id: number | null) {
       this.projectId = id
+    },
+
+    setRefDocuments(docs: { name: string; url: string }[]) {
+      this.refDocuments = docs
     },
 
     setSaveStatus(status: 'saved' | 'saving' | 'unsaved') {
