@@ -1,5 +1,7 @@
 # AI-PPT
 
+[![CI](https://github.com/myismu/ai-ppt/actions/workflows/ci.yml/badge.svg)](https://github.com/myismu/ai-ppt/actions/workflows/ci.yml)
+
 AI-PPT 是一个智能 PPT 生成与在线编辑系统，支持从主题或文档生成大纲、流式生成幻灯片、在线编辑、项目管理、云端保存以及 PPTX 导出。
 
 ## 架构说明（重要）

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+============================================================
+模块名称：ai-ppt-api（AI-PPT 业务契约库）
+模块描述：定义 AI-PPT 仓库内服务间调用的 Feign 客户端接口
+
+说明：
+- ai-service 的调用契约统一放这里，调用方（ppt-service）依赖本模块，
+  不要各自手写 Feign 接口
+- 平台（用户中心 / 文件服务）的契约在平台仓库发布的 api 制品中
+- 本模块与调用方同仓库，通过 reactor 依赖即可，无需发布制品
+============================================================
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.exambaby</groupId>
+        <artifactId>ai-ppt</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>ai-ppt-api</artifactId>
+
+    <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <!-- common：ApiResponse 等通用对象（版本由平台父 pom 管理） -->
+        <dependency>
+            <groupId>com.exambaby</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+
+        <!-- 注解支持：provided，运行时由消费者服务提供 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Lombok：简化代码 -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+</project>

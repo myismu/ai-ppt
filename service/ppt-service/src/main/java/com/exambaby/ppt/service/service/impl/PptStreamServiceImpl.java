@@ -5,7 +5,7 @@ import com.exambaby.ppt.service.dto.request.PptGenerateRequest;
 import com.exambaby.ppt.service.dto.request.PptOutlineRequest;
 import com.exambaby.ppt.service.dto.request.PptWritingRequest;
 import com.exambaby.ppt.service.dto.response.SseMessage;
-import com.exambaby.ppt.service.feign.dto.AiWritingFeignRequest;
+import com.exambaby.api.ai.dto.AiWritingFeignRequest;
 import com.exambaby.ppt.service.service.PptStreamService;
 import com.exambaby.ppt.service.support.PptPromptBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;

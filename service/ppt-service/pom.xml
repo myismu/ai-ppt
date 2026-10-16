@@ -17,6 +17,19 @@
             <artifactId>common</artifactId>
         </dependency>
 
+        <!-- 平台契约库：文件服务客户端（file-service 的契约，随平台发布） -->
+        <dependency>
+            <groupId>com.exambaby</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+
+        <!-- 仓库内契约库：AI 服务客户端（ai-service 的契约，与本仓库同源） -->
+        <dependency>
+            <groupId>com.exambaby</groupId>
+            <artifactId>ai-ppt-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

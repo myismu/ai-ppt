@@ -11,7 +11,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
  */
 @SpringBootApplication(scanBasePackages = {"com.exambaby.ppt.service", "com.exambaby.common"})
 @EnableDiscoveryClient
-@EnableFeignClients
+@EnableFeignClients(basePackages = "com.exambaby.api")
 @MapperScan("com.exambaby.ppt.service.mapper")
 public class PptApplication {
 

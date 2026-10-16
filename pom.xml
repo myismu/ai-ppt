@@ -27,17 +27,19 @@
     <parent>
         <groupId>com.exambaby</groupId>
         <artifactId>cloud</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.1</version>
         <relativePath/>
     </parent>
 
     <!-- ==================== 项目坐标 ==================== -->
-    <!-- 版本继承平台父 pom；业务仓库不单独发布制品 -->
+    <!-- 业务仓库不发布制品，版本独立于平台（避免平台升版时级联改动内部 parent 引用） -->
     <artifactId>ai-ppt</artifactId>
+    <version>1.0.0</version>
     <packaging>pom</packaging>
 
     <!-- ==================== 子模块 ==================== -->
     <modules>
+        <module>api</module>
         <module>service</module>
     </modules>
 </project>

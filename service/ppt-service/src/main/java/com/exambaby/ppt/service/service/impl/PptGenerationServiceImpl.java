@@ -2,8 +2,8 @@ package com.exambaby.ppt.service.service.impl;
 
 import com.exambaby.common.core.domain.ApiResponse;
 import com.exambaby.ppt.service.dto.request.PptImageRequest;
-import com.exambaby.ppt.service.feign.AiServiceClient;
-import com.exambaby.ppt.service.feign.dto.AiImageFeignRequest;
+import com.exambaby.api.ai.client.AiServiceClient;
+import com.exambaby.api.ai.dto.AiImageFeignRequest;
 import com.exambaby.ppt.service.service.PptGenerationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

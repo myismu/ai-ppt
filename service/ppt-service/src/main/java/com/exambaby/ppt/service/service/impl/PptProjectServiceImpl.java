@@ -6,7 +6,7 @@ import com.exambaby.ppt.service.dto.request.PptSaveRequest;
 import com.exambaby.ppt.service.dto.response.PptProjectDetailVO;
 import com.exambaby.ppt.service.dto.response.PptProjectVO;
 import com.exambaby.ppt.service.entity.PptProject;
-import com.exambaby.ppt.service.feign.FileServiceClient;
+import com.exambaby.api.file.client.FileServiceClient;
 import com.exambaby.ppt.service.mapper.PptProjectMapper;
 import com.exambaby.ppt.service.service.PptProjectService;
 import lombok.RequiredArgsConstructor;

@@ -13,7 +13,7 @@ import com.exambaby.ppt.service.dto.response.ImageUrlResponse;
 import com.exambaby.ppt.service.dto.response.PptIdVO;
 import com.exambaby.ppt.service.dto.response.PptProjectDetailVO;
 import com.exambaby.ppt.service.dto.response.PptProjectVO;
-import com.exambaby.ppt.service.feign.FileServiceClient;
+import com.exambaby.api.file.client.FileServiceClient;
 import com.exambaby.ppt.service.service.PptGenerationService;
 import com.exambaby.ppt.service.service.PptProjectService;
 import com.exambaby.ppt.service.service.PptStreamService;
@@ -35,7 +35,7 @@ public class PptController {
     private final PptStreamService pptStreamService;
     private final PptProjectService pptProjectService;
     private final FileServiceClient fileServiceClient;
-    private final com.exambaby.ppt.service.feign.AiServiceClient aiServiceClient;
+    private final com.exambaby.api.ai.client.AiServiceClient aiServiceClient;
     private final com.exambaby.ppt.service.service.PptConfigOptionService pptConfigOptionService;
 
     // ==================== 项目 CRUD 接口 ====================
