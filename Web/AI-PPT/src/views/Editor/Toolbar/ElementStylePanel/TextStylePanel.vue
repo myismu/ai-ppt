@@ -278,7 +278,7 @@ const handleAIPolish = async (command: string) => {
     }
     
     const readStream = () => {
-      reader.read().then(({ done, value }) => {
+      reader.read().then(({ done, value }: { done: boolean; value?: Uint8Array }) => {
         if (done) {
           if (lineBuffer.trim()) handleLine(lineBuffer.trim())
           isAIWriting.value = false
