@@ -2,149 +2,73 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository Scope
+## 仓库定位
 
-This repository currently contains multiple Vue 3 frontends under `Web/`. Each app is a separate Vite project with its own dependencies, dev server port, routing tree, and API surface. Do not assume cross-app shared packages beyond the repeated upstream template structure.
+AI-PPT 智能 PPT 生成与在线编辑平台：从主题或长文档生成大纲、流式生成幻灯片、在线编辑、项目管理、云端保存与 PPTX 导出。
 
-## QuestionBank-Admin
+本仓库自包含（题库系统在独立的 question-bank 仓库，不在此仓库内）：
 
-### Common Commands
+- 后端：Spring Cloud 微服务（Java 17 / Spring Boot 3.5 / Spring Cloud 2025 / Spring Cloud Alibaba 2025）
+- 前端：两个独立的 Vue 3 + Vite 工程（`Web/AI-PPT`、`Web/UserHub-Web`）
 
-Run all commands from `Web/QuestionBank-Admin`.
+## 后端微服务
 
-```bash
-pnpm install
-pnpm dev
-pnpm build
-pnpm build:staging
-pnpm preview
-pnpm lint
-pnpm test
-pnpm vitest --run tests/utils/validate.test.ts
-pnpm vitest --run tests/components/Notify.test.ts
-```
+| 模块 | 职责 | 端口 |
+|---|---|---|
+| `gateway` | 网关：路由、JWT 鉴权、CORS、请求日志 | 8080 |
+| `service/user-hub-service` | 用户服务：登录、注册、用户/角色/路由管理 | 8001 |
+| `service/file-service` | 文件服务：上传、静态资源（/img、/image、/templates、/projects）、存储统计 | 8003 |
+| `service/ai-service` | AI 服务：大模型接入（文本/生图）、文档转 PPT 大纲 | 8083 |
+| `service/ppt-service` | PPT 服务：项目持久化、生成编排、模板配置 | 8084 |
+| `common` | 公共模块：JwtUtil、统一返回、全局异常、登录头过滤器 | - |
+| `api` | Feign 客户端接口定义 | - |
 
-Notes:
-- `pnpm dev` starts Vite on port `3335` and proxies `/api` to `http://127.0.0.1:8080`.
-- Production build runs `vue-tsc && vite build`; staging build uses `--mode staging`.
-- Vitest is configured in `vite.config.ts` with `happy-dom` and `tests/**/*.test.{ts,js}`.
-- The Husky pre-commit hook runs `npx vue-tsc` and then `npx lint-staged`, so type errors will block commits even if `pnpm lint` passes.
+### 配置与依赖
 
-### High-Level Architecture
+- 运行时配置全部来自 **Nacos**（开发命名空间 `a1e2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c`），本地 `application-dev.yml` 只保留端口与 Nacos 地址。
+- 配置模板在 `naocs/nacos-dev/`，按 Data ID 导入 Nacos 对应命名空间。仓库内所有敏感值均为占位符（如 `${MYSQL_PWD:}`、`${JWT_SECRET:}`），真实值通过环境变量注入，**不要提交任何真实密钥**。
+- 中间件依赖：MySQL（`user_hub` / `ppt_db` / `ai_db` / `seata` 库）、Redis、Nacos、RocketMQ（NameServer 9876）、Seata（8091）。ppt-service 与 user-hub-service 配置了 Seata，但当前无业务代码使用全局事务。
+- SQL 脚本在 `SQL/`：`user_hub.sql`、`ppt.sql`、`ai_db.sql`、`seata.sql`。
 
-This app is a Vue 3 + Vite + TypeScript admin frontend derived from `v3-admin-vite`, but it has been adapted into a question-bank management system for administrators.
-
-- App bootstrap lives in `src/main.ts`: create app, install shared plugins, attach Pinia and Vue Router, then mount after `router.isReady()`.
-- Global plugin registration is centralized in `src/plugins/index.ts`, which wires Element Plus icon components, the permission directive, SVG icon support, and VXE Table once at startup.
-- Routing is defined in `src/router/index.ts`. Most business pages are currently in `constantRoutes`, organized by domains like system logs, question bank management, and learning statistics.
-- Route access control is enforced in `src/router/guard.ts`: token comes from cookies, user info is fetched lazily on first guarded navigation, and allowed routes are injected through the permission store.
-- `src/router/config.ts` has `dynamic: true`, so permission flow matters even though most route declarations are static; the guard still loads roles and calls the permission store before allowing navigation.
-- State is organized with Pinia in `src/pinia`. `stores/user.ts` owns token, roles, username, logout/reset behavior, and `getInfo()`, which calls the current-user API and supplies fallback roles from router config.
-- HTTP access is centralized in `src/http/axios.ts`. All page-level API modules call the exported `request()` helper, which injects `Authorization`, merges defaults, unwraps backend `code`, and handles auth/network failures with global `ElMessage` feedback.
-- Backend-facing API wrappers are colocated with features: shared auth/user calls live in `src/common/apis`, while page-specific endpoints live under each page directory such as `src/pages/questionBanks/apis` or `src/pages/activityRecords/apis`.
-- Business screens are feature-first under `src/pages`. Each major route usually has its own page component plus a local `apis/` folder, so when changing a feature, start from the page directory rather than searching globally.
-- Layout shell code is under `src/layouts`, with multiple layout modes and shared pieces like sidebar, breadcrumb, tags view, and settings drawer.
-- Shared reusable code is under `src/common`: assets, composables, utility functions, generic components, and cache helpers used across pages and stores.
-
-### Build and Tooling Details
-
-- Path aliases in `vite.config.ts`: `@` -> `src`, `@@` -> `src/common`.
-- Auto-import scans `src/pinia/stores` and `src/common/composables`, so some store/composable symbols may appear without explicit imports.
-- SVG icons are generated from `src/common/assets/icons`, with a special preserve-color directory at `src/common/assets/icons/preserve-color`.
-- Manual chunk splitting groups Vue core, Element Plus, and VXE Table into separate bundles.
-- CI deploy workflow in `.github/workflows/deploy.yml` installs with pnpm, runs `pnpm build`, and deploys `dist` to GitHub Pages.
-
-### Existing Tests
-
-Current test coverage is light and mostly template-level. Existing tests are in `tests/`, including `tests/utils/validate.test.ts`, `tests/components/Notify.test.ts`, and `tests/demo.test.ts`. For feature work, do not assume the current suite protects page-level behavior.
-
-### Upstream Context From README
-
-The app inherits several upstream conventions from `v3-admin-vite`: Vue 3 Composition API with `script setup`, Element Plus UI, Pinia, Vue Router, UnoCSS, SCSS theme variables, multi-layout support, and role-based permission routing. Keep that template heritage in mind before refactoring core layout, router, or store infrastructure.
-
-## QuestionBank-Web
-
-### Common Commands
-
-Run all commands from `Web/QuestionBank-Web`.
+### 构建与启动
 
 ```bash
-pnpm install
-pnpm dev
-pnpm build
-pnpm build:staging
-pnpm preview
-pnpm lint
-pnpm test
-pnpm vitest --run tests/utils/validate.test.ts
-pnpm vitest --run tests/components/Notify.test.ts
+mvn clean install    # 先安装 common/api 到本地仓库
 ```
 
-Notes:
-- `pnpm dev` starts Vite on port `3334` and proxies `/api` to `http://127.0.0.1:8080`.
-- Build, lint, test, and Vitest configuration are effectively the same shape as the admin app.
-- This app also keeps the upstream Husky flow, so `vue-tsc` and `lint-staged` are part of commit-time validation.
+再依次启动各模块启动类：`GatewayApplication` → `UserHubApplication` → `FileApplication` → `AiApplication` → `PptApplication`。
 
-### High-Level Architecture
+### 关键机制
 
-This app reuses the same Vue 3/Vite template foundation as the admin app, but the route tree and feature modules are end-user facing around studying, practicing, and managing personal question banks.
+- **网关鉴权**：`gateway` 的 `AuthFilter` 校验 JWT（`common/JwtUtil`），并检查 Redis 在线状态（`online:{systemCode}:{userId}` 必须存在且与 token 一致）。免认证白名单见 `AuthFilter.WHITE_LIST`。
+- **JWT 密钥**：`user-hub-service` 签发、`gateway` 校验，两边共用 Nacos 下发的 `jwt.secret`，修改必须全服务同步。
+- **AI 模型配置**：持久化在 `ai_db.ai_model_config` 表（provider / apiFormat / modelName / baseUrl / apiKey / extraConfig），`ai-service` 运行时动态读取，按 `apiFormat`（openai / anthropic）路由到不同适配器。
+- **流式响应**：AI 生成走 SSE 流式，网关开启 `streaming-media-types`（text/event-stream），并给 `/api/ppt/**`、`/api/tools/**` 路由追加 `X-Accel-Buffering: no` 响应头。
 
-- The same bootstrap pattern appears in `src/main.ts`: create app, install shared plugins, then register Pinia and router.
-- Routing in `src/router/index.ts` is centered on three areas: auth pages under `/user/*`, learner dashboard pages under `/home` and its child views, and question-bank workflows under `/question-bank/*`.
-- `src/pages/home/index.vue` acts as a landing/dashboard page and links users into public banks, learning statistics, and the wrong-question workflow.
-- `src/pages/question-bank/index.vue` is the main personal-bank workspace. It loads created and favorited banks, filters them client-side, and routes into create/detail/practice/exam/manage subflows.
-- Practice behavior is substantial and stateful in `src/pages/question-bank/views/practice.vue`: it loads questions by bank, tracks answer history and progress, persists activity records through page-local API modules, and saves on navigation or visibility changes.
-- Learning analytics live under `src/pages/home/views/statistics.vue`, where ECharts renders trend and progress visualizations based on page-local statistics APIs.
-- Shared auth/user flow still comes from Pinia plus cookie-backed router guards. The app keeps the same `src/pinia/stores/user.ts` pattern and `src/common/apis/users/index.ts` current-user request used by the template guard flow.
-- API wrappers are split by feature under `src/pages/home/apis` and `src/pages/question-bank/apis`, so feature work usually requires changing both the page view and its colocated API helpers.
+## 前端
 
-### Build and Tooling Details
+### Web/AI-PPT
 
-- Path aliases remain `@` -> `src` and `@@` -> `src/common`.
-- Vite auto-import and component auto-registration follow the same upstream pattern as the admin app.
-- This app adds `echarts` to the dependency set for the learning-statistics views.
-- The structure is close to `QuestionBank-Admin`, so shared fixes can sometimes be ported, but verify ports, route names, and page responsibilities before copying changes.
+基于 PPTist 二次开发的编辑器前端。
 
-### Existing Tests
+- 命令：`pnpm install` / `pnpm dev`（端口 3336）/ `pnpm build`（vue-tsc + vite build）
+- `vite.config.ts` 将 `/api`、`/templates`、`/projects`、`/img`、`/image` 代理到 `127.0.0.1:8080`（网关），因此本地联调需要先启动后端服务。
+- 核心代码：`src/views/Editor`（编辑器）、`src/views/Projects`（项目管理）、`src/hooks/useAIPPT.ts`（AI 生成流程）、`src/hooks/useExport.ts`（导出）、`src/types/slides.ts`（幻灯片类型定义）。
 
-The visible tooling and test layout match the upstream template, which means tests exist but are still sparse relative to the customized learner-facing flows. Treat interactive pages like practice, exam, and statistics as needing targeted verification after changes.
+### Web/UserHub-Web
 
-## UserHub-Web
+基于 v3-admin-vite 模板的用户中心前端。
 
-### Common Commands
+- 命令：`pnpm install` / `pnpm dev`（端口 3333）/ `pnpm build`
+- 登录流程包含验证码与 token 两步（`src/pages/login/apis/index.ts`）。
+- 保留模板的 Pinia user store + cookie token + 路由守卫组合。
 
-Run all commands from `Web/UserHub-Web`.
+## 部署
 
-```bash
-pnpm install
-pnpm dev
-pnpm build
-pnpm build:staging
-pnpm preview
-pnpm lint
-pnpm test
-pnpm vitest --run tests/utils/validate.test.ts
-pnpm vitest --run tests/components/Notify.test.ts
-```
+- `docker-compose.yml`：单机全量编排（nacos / mysql / redis / gateway / file-service / ai-service / ppt-service / 前端）。
+- `.github/workflows/deploy.yml`：push 到 main 后构建后端并 SSH 部署，需要在仓库 Secrets 配置 `SERVER_HOST` / `SERVER_USER` / `SERVER_SSH_KEY`。
 
-Notes:
-- `pnpm dev` starts Vite on port `3333` and proxies `/api` to `http://127.0.0.1:8080`.
-- The file encoding/comments in some files appear messy, but the runtime structure still follows the same Vite + Vue 3 template as the other two apps.
-- Login flow includes both captcha and token APIs in `src/pages/login/apis/index.ts`.
+## 安全约定
 
-### High-Level Architecture
-
-`Web/UserHub-Web` currently looks closest to the upstream admin-template baseline, but with user/account-oriented auth endpoints and a separate runtime port.
-
-- App startup still follows the same pattern as the other apps: `src/main.ts` creates the app, installs shared plugins, then mounts with Pinia and router.
-- Routing in `src/router/index.ts` is still largely template-oriented, with dashboard-first navigation and the standard redirect/error/auth setup rather than the question-bank learner flows.
-- `src/router/config.ts` still enables dynamic routing through role loading, so the permission-store/guard model remains relevant here too.
-- `src/pinia/stores/user.ts` follows the same template contract as the admin app: token and roles in store state, current-user lookup via `src/common/apis/users/index.ts`, logout/reset helpers, and fallback roles from router config.
-- Shared request/auth infrastructure is still template-shaped, so if auth breaks here, inspect the same chain as in the other apps: login API -> cookie token helpers -> user store -> route guard -> centralized axios wrapper.
-- Because this app is less customized than `QuestionBank-Web`, treat it as a separate app that may still be mid-migration from the upstream template rather than as a polished feature-complete user portal.
-
-### Build and Tooling Details
-
-- Tooling conventions match the other apps: Vite, Vue 3, TypeScript, Element Plus, UnoCSS, Pinia, Vue Router, Vitest, and the same alias layout.
-- The port differs from the other two apps, so do not assume one frontend can be started in place of another during local development.
-- If you need to compare behavior across apps, `UserHub-Web` is the best place to inspect unmodified template patterns before applying changes to the more customized projects.
+- 不提交真实密钥、密码、生产数据库密码；配置走环境变量或 Nacos 私有配置。
+- 新增配置项时同步更新 `naocs/nacos-dev/` 模板与 `README.md` 的部署说明。
