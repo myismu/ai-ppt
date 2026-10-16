@@ -29,7 +29,7 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}   # SSH 私钥
         port: 22
         script: |
-          cd /path/to/your/project/question-bank-cloud
+          cd /path/to/your/project/ai-ppt
           git pull origin main
           # 确保后端 JAR 包已同步或在服务器重新构建（本脚本采用在流水线构建并同步的方式更佳，此处为简化流程）
           docker-compose up -d --build

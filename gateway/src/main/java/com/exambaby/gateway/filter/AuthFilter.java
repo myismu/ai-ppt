@@ -89,8 +89,7 @@ import java.util.List;
  * - /api/auth/login     - 登录接口
  * - /api/auth/captcha   - 验证码接口
  * - /api/auth/register  - 注册接口
- * - /api/public/**      - 公开接口
- * - /img/**             - 静态资源
+ * - /img/**, /image/, /templates/, /projects/ - 静态资源
  * ============================================================
  */
 @Log4j2
@@ -109,7 +108,6 @@ public class AuthFilter implements GlobalFilter, Ordered {
      * 这些路径不需要 Token 验证，可以直接访问
      * 包括：
      * - 登录、注册、验证码等公开接口
-     * - 公开的题库查询接口
      * - 静态资源路径
      */
     private static final List<String> WHITE_LIST = Arrays.asList(
@@ -117,14 +115,10 @@ public class AuthFilter implements GlobalFilter, Ordered {
             "/api/auth/captcha",
             "/api/auth/register",
             "/api/users/getUserNameById",
-            "/api/public/questionBank/getAllPublicQuestionBanks",
-            "/api/public/questionBank/getPublicQuestionBankById",
-            "/api/public/questions/getQuestionsByPage",
             "/img/",        // 静态资源：用户上传图片
             "/image/",      // 静态资源：AI 生成图片
             "/templates/",  // 静态资源：PPT 模板 JSON 及预览图
-            "/projects/",   // 静态资源：PPT 项目 JSON 文件
-            "/api/seata/test/rollback" // 测试 Seata 分布式事务
+            "/projects/"    // 静态资源：PPT 项目 JSON 文件
     );
 
     /**

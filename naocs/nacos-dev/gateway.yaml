@@ -28,17 +28,9 @@ spring:
             - id: user-hub-service
               uri: lb://user-hub-service
               predicates:
-                - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/routes/**,/api/systemInfo/**,/api/login-history/**,/api/password-history/**,/api/redis/**,/api/seata/test/**
+                - Path=/api/auth/**,/api/users/**,/api/roles/**,/api/routes/**,/api/systemInfo/**,/api/login-history/**,/api/password-history/**,/api/redis/**
               filters:
                 - StripPrefix=1 # 去掉前缀
-
-            # ==================== 题库服务路由 ====================
-            - id: question-bank-service
-              uri: lb://question-bank-service
-              predicates:
-                - Path=/api/public/**,/api/admin/**
-              filters:
-                - StripPrefix=1
 
             # ==================== 独立文件服务路由 (新增) ====================
             - id: file-service
@@ -159,7 +151,7 @@ spring:
       enabled: true
 
 jwt:
-  secret: YOUR_JWT_SECRET_HERE
+  secret: ${JWT_SECRET:}
   expiration: 86400000
 
 logging:

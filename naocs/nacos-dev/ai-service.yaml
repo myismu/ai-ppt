@@ -23,5 +23,5 @@ logging:
     org.springframework.web.reactive.function.client.WebClient: DEBUG
 # JWT 配置
 jwt:
-  secret: YOUR_JWT_SECRET_HERE
+  secret: ${JWT_SECRET:}
   expiration: 86400000 #  24 小时

@@ -14,7 +14,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>question-bank-service</module>
         <module>user-hub-service</module>
         <module>ai-service</module>
         <module>ppt-service</module>

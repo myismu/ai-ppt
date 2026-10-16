@@ -43,15 +43,8 @@ spring:
               filters:
                 - StripPrefix=1
 
-            - id: question-bank-service # 题库服务
-              uri: lb://question-bank-service
-              predicates:
-                - Path=/api/public/**,/api/file/**,/api/admin/**
-              filters:
-                - StripPrefix=1
-
             - id: static-resources # 静态资源
-              uri: lb://question-bank-service
+              uri: lb://file-service
               predicates:
                 - Path=/img/**
               filters:
@@ -84,7 +77,7 @@ spring:
           min-idle: 5
 
 jwt:
-  secret: ${JWT_SECRET:YOUR_JWT_SECRET_HERE}
+  secret: ${JWT_SECRET:}
   expiration: 86400000
 
 logging:

@@ -39,5 +39,5 @@ Thumbs.db
 # 忽略 AI 工具产生的文件
 .claude/
 
+# 忽略运行时上传产物
 service/file-service/upload/
-/service/question-bank-service/

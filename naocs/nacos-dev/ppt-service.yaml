@@ -9,7 +9,7 @@ spring:
     # 建议此处根据你的本地 MySQL 调整，或通过系统环境变量 MYSQL_HOST, MYSQL_PWD 传入
     url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:3306/ppt_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC
     username: ${MYSQL_USER:root}
-    password: ${MYSQL_PWD:YOUR_DB_PASSWORD_HERE}
+    password: ${MYSQL_PWD:}
 
   # 2. Redis 配置 (用于状态追踪、缓存及 Sentinel 动态规则)
   data:
@@ -70,7 +70,7 @@ ppt:
     base-url: ${AI_SERVICE_URL:http://ai-service}
   # 文件上传根路径（本地文件系统绝对路径）
   upload:
-    path: E:/demo/question-bank-cloud/service/ppt-service/upload/
+    path: E:/demo/ai-ppt/service/ppt-service/upload/
 
 # 8. 日志审计与调试
 logging:
@@ -79,5 +79,5 @@ logging:
     org.springframework.jdbc.datasource: DEBUG
 # JWT 配置
 jwt:
-  secret: YOUR_JWT_SECRET_HERE
+  secret: ${JWT_SECRET:}
   expiration: 86400000

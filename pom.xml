@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 ============================================================
-项目名称：question-bank-cloud（题库云平台）
-项目描述：基于 Spring Cloud 微服务架构的在线题库系统
+项目名称：AI-PPT（智能 PPT 生成与在线编辑平台）
+项目描述：基于 Spring Cloud 微服务架构的 AI PPT 系统
 
 模块结构：
 ├── common        - 公共模块：工具类、实体类、异常处理
 ├── api           - API 模块：Feign 客户端接口定义
 ├── gateway       - 网关模块：路由、鉴权、限流
 └── service       - 服务模块：
-    ├── user-hub-service      - 用户服务：认证、用户管理
-    └── question-bank-service - 题库服务：题库管理、文件处理
+    ├── user-hub-service - 用户服务：认证、用户管理
+    ├── file-service     - 文件服务：上传、静态资源、存储统计
+    ├── ai-service       - AI 服务：大模型接入、生图、文档转 PPT
+    └── ppt-service      - PPT 服务：项目持久化、生成编排
 
 技术栈：
 - Spring Boot 3.5.0

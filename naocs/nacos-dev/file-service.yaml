@@ -52,5 +52,5 @@ seata:
     vgroup-mapping:
       exam-bank-tx-group: default
 jwt:
-  secret: YOUR_JWT_SECRET_HERE
+  secret: ${JWT_SECRET:}
   expiration: 86400000

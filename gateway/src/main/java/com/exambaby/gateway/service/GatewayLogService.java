@@ -27,7 +27,6 @@ import reactor.core.publisher.Mono;
  *          ↓
  *   ┌─────────────────────────────────────┐
  *   │ /api/auth/** → user-hub-service     │
- *   │ /api/public/** → question-bank      │
  *   └─────────────────────────────────────┘
  *          ↓
  *   通过 WebClient 调用内部接口保存日志
@@ -42,7 +41,6 @@ import reactor.core.publisher.Mono;
  * WebClient 配置说明：
  * - @LoadBalanced: 启用负载均衡，通过 Nacos 发现服务实例
  * - lb://user-hub-service: 使用负载均衡调用用户服务
- * - lb://question-bank-service: 使用负载均衡调用题库服务
  * ============================================================
  */
 @Log4j2
@@ -54,12 +52,6 @@ public class GatewayLogService {
      * 用于调用 user-hub-service 的内部接口
      */
     private final WebClient userHubClient;
-
-    /**
-     * 题库服务的 WebClient
-     * 用于调用 question-bank-service 的内部接口
-     */
-    private final WebClient questionBankClient;
 
     /**
      * 构造函数，初始化 WebClient
@@ -74,10 +66,6 @@ public class GatewayLogService {
         this.userHubClient = webClientBuilder
                 .baseUrl("lb://user-hub-service")
                 .build();
-
-        this.questionBankClient = webClientBuilder
-                .baseUrl("lb://question-bank-service")
-                .build();
     }
 
     /**
@@ -85,7 +73,6 @@ public class GatewayLogService {
      * 
      * 根据请求路径判断日志应该保存到哪个服务：
      * - 用户服务路径：/api/auth/**, /api/users/**, /api/roles/** 等
-     * - 题库服务路径：/api/public/**, /api/file/**, /api/admin/**
      * 
      * @param globalLog 日志对象，包含请求信息
      * @return Mono<Boolean> 保存结果（true=成功，false=失败）
@@ -103,13 +90,6 @@ public class GatewayLogService {
                 || requestUrl.startsWith("/api/password-history/")
                 || requestUrl.startsWith("/api/redis/")) {
             return saveLogToUserHub(globalLog);
-        }
-
-        // 题库服务相关路径，保存到 question-bank-service
-        if (requestUrl.startsWith("/api/public/")
-                || requestUrl.startsWith("/api/file/")
-                || requestUrl.startsWith("/api/admin/")) {
-            return saveLogToQuestionBank(globalLog);
         }
 
         // 其他路径不保存日志
@@ -132,25 +112,6 @@ public class GatewayLogService {
                 .retrieve()
                 .bodyToMono(Boolean.class)
                 .doOnError(e -> log.error("Failed to save log to user-hub-service: {}", e.getMessage()))
-                .onErrorReturn(false);
-    }
-
-    /**
-     * 保存日志到题库服务
-     * 
-     * 调用 question-bank-service 的内部接口 /internal/log/save
-     * 该接口不在网关路由中暴露，仅供内部调用
-     * 
-     * @param globalLog 日志对象
-     * @return Mono<Boolean> 保存结果
-     */
-    private Mono<Boolean> saveLogToQuestionBank(GlobalLog globalLog) {
-        return questionBankClient.post()
-                .uri("/internal/log/save")
-                .bodyValue(globalLog)
-                .retrieve()
-                .bodyToMono(Boolean.class)
-                .doOnError(e -> log.error("Failed to save log to question-bank-service: {}", e.getMessage()))
                 .onErrorReturn(false);
     }
 }
