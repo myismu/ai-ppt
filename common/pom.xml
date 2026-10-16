@@ -27,7 +27,7 @@
     <!-- ==================== 父模块 ==================== -->
     <parent>
         <groupId>com.exambaby</groupId>
-        <artifactId>question-bank-cloud</artifactId>
+        <artifactId>cloud</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 

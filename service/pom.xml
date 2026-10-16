@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>com.exambaby</groupId>
-        <artifactId>question-bank-cloud</artifactId>
+        <artifactId>cloud</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
@@ -151,12 +151,12 @@
 
         <!-- ==================== 开发工具 ==================== -->
 
-        <!-- DevTools：热部署，开发环境使用 -->
-        <dependency>
+        <!-- DevTools：已注释掉。微服务架构中配合Seata等字节码操作中间件会引发严重的双类加载器冲突（NoClassDefFoundError） -->
+        <!-- <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
-        </dependency>
+        </dependency> -->
 
         <!-- Lombok：简化代码 -->
         <dependency>

@@ -21,6 +21,7 @@ target/
 
 # 忽略日志文件
 *.log
+error_log.txt
 
 # 忽略本地环境覆盖文件
 *.local
@@ -38,3 +39,5 @@ Thumbs.db
 # 忽略 AI 工具产生的文件
 .claude/
 
+service/file-service/upload/
+/service/question-bank-service/
