@@ -15,37 +15,40 @@ import svgLoader from "vite-svg-loader"
 export default defineConfig(({ mode }) => {
   const { VITE_PUBLIC_PATH } = loadEnv(mode, process.cwd(), "") as ImportMetaEnv
   return {
-    // 寮€鍙戞垨鎵撳寘鏋勫缓鏃剁敤鍒扮殑鍏叡鍩虹璺緞
+    // 开发或打包构建时用到的公共基础路径
     base: VITE_PUBLIC_PATH,
     resolve: {
       alias: {
-        // @ 绗﹀彿鎸囧悜 src 鐩綍
+        // @ 符号指向 src 目录
         "@": resolve(__dirname, "src"),
-        // @@ 绗﹀彿鎸囧悜 src/common 閫氱敤鐩綍
+        // @@ 符号指向 src/common 通用目录
         "@@": resolve(__dirname, "src/common")
       }
     },
-    // 寮€鍙戠幆澧冩湇鍔″櫒閰嶇疆
+    // 开发环境服务器配置
     server: {
-      // 鏄惁鐩戝惉鎵€鏈夊湴鍧€
+      // 是否监听所有地址
       host: true,
-      // 绔彛鍙?      port: 3333,
-      // 绔彛琚崰鐢ㄦ椂锛屾槸鍚︾洿鎺ラ€€鍑?      strictPort: false,
-      // 鏄惁鑷姩鎵撳紑娴忚鍣?      open: true,
-      // 鍙嶅悜浠ｇ悊
+      // 端口号
+      port: 3333,
+      // 端口被占用时，是否直接退出
+      strictPort: false,
+      // 是否自动打开浏览器
+      open: true,
+      // 反向代理
       proxy: {
         "/api": {
           // target: "https://apifoxmock.com/m1/2930465-2145633-default",
           target: "http://127.0.0.1:8080",
-          // 鏄惁涓?WebSocket
+          // 是否代理 WebSocket
           ws: false,
-          // 鏄惁鍏佽璺ㄥ煙
+          // 是否允许跨域
           changeOrigin: true
         }
       },
-      // 鏄惁鍏佽璺ㄥ煙
+      // 是否允许跨域
       cors: true,
-      // 棰勭儹甯哥敤鏂囦欢锛屾彁楂樺垵濮嬮〉闈㈠姞杞介€熷害
+      // 预热常用文件，提高初始页面加载速度
       warmup: {
         clientFiles: [
           "./src/layouts/**/*.*",
@@ -54,15 +57,16 @@ export default defineConfig(({ mode }) => {
         ]
       }
     },
-    // 鏋勫缓閰嶇疆
+    // 构建配置
     build: {
-      // 鑷畾涔夊簳灞傜殑 Rollup 鎵撳寘閰嶇疆
+      // 自定义底层的 Rollup 打包配置
       rollupOptions: {
         output: {
           /**
-           * @name 鍒嗗潡绛栫暐
-           * @description 1. 娉ㄦ剰杩欎簺鍖呭悕蹇呴』瀛樺湪锛屽惁鍒欐墦鍖呬細鎶ラ敊
-           * @description 2. 濡傛灉浣犱笉鎯宠嚜瀹氫箟 chunk 鍒嗗壊绛栫暐锛屽彲浠ョ洿鎺ョЩ闄よ繖娈甸厤缃?           */
+           * @name 分块策略
+           * @description 1. 注意这些包名必须存在，否则打包会报错
+           * @description 2. 如果你不想自定义 chunk 分割策略，可以直接移除这段配置
+           */
           manualChunks: {
             vue: ["vue", "vue-router", "pinia"],
             element: ["element-plus", "@element-plus/icons-vue"],
@@ -70,26 +74,29 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
-      // 鏄惁寮€鍚?gzip 鍘嬬缉澶у皬鎶ュ憡锛岀鐢ㄦ椂鑳界暐寰彁楂樻瀯寤烘€ц兘
+      // 是否开启 gzip 压缩大小报告，禁用时能略微提高构建性能
       reportCompressedSize: false,
-      // 鍗曚釜 chunk 鏂囦欢鐨勫ぇ灏忚秴杩?2048kB 鏃跺彂鍑鸿鍛?      chunkSizeWarningLimit: 2048
+      // 单个 chunk 文件的大小超过 2048kB 时发出警告
+      chunkSizeWarningLimit: 2048
     },
-    // 娣锋穯鍣?    esbuild:
+    // 混淆器
+    esbuild:
       mode === "development"
         ? undefined
         : {
-            // 鎵撳寘鏋勫缓鏃剁Щ闄?console.log
+            // 打包构建时移除 console.log
             pure: ["console.log"],
-            // 鎵撳寘鏋勫缓鏃剁Щ闄?debugger
+            // 打包构建时移除 debugger
             drop: ["debugger"],
-            // 鎵撳寘鏋勫缓鏃剁Щ闄ゆ墍鏈夋敞閲?            legalComments: "none"
+            // 打包构建时移除所有注释
+            legalComments: "none"
           },
-    // 鎻掍欢閰嶇疆
+    // 插件配置
     plugins: [
       vue(),
-      // 鏀寔 JSX銆乀SX 璇硶
+      // 支持 JSX、TSX 语法
       vueJsx(),
-      // 鏀寔灏?SVG 鏂囦欢瀵煎叆涓?Vue 缁勪欢
+      // 支持将 SVG 文件导入为 Vue 组件
       svgLoader({
         defaultImport: "url",
         svgoConfig: {
@@ -106,21 +113,22 @@ export default defineConfig(({ mode }) => {
           ]
         }
       }),
-      // 鑷姩鐢熸垚 SvgIcon 缁勪欢鍜?SVG 闆ⅶ鍥?      SvgComponent({
+      // 自动生成 SvgIcon 组件和 SVG 雪碧图
+      SvgComponent({
         iconDir: [resolve(__dirname, "src/common/assets/icons")],
         preserveColor: resolve(__dirname, "src/common/assets/icons/preserve-color"),
         dts: true,
         dtsDir: resolve(__dirname, "types/auto")
       }),
-      // 鍘熷瓙鍖?CSS
+      // 原子化 CSS
       UnoCSS(),
-      // 鑷姩鎸夐渶瀵煎叆 API
+      // 自动按需导入 API
       AutoImport({
         imports: ["vue", "vue-router", "pinia"],
         dts: "types/auto/auto-imports.d.ts",
         resolvers: [ElementPlusResolver()]
       }),
-      // 鑷姩鎸夐渶瀵煎叆缁勪欢
+      // 自动按需导入组件
       Components({
         dts: "types/auto/components.d.ts",
         resolvers: [ElementPlusResolver()]
