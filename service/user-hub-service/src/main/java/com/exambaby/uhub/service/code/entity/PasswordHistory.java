@@ -4,11 +4,11 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
-@TableName("password_history")
 /**
  * 密码历史记录实体类，对应数据库中的password_history表
  */
+@Data
+@TableName("password_history")
 public class PasswordHistory {
     /**
      * 主键ID，使用自增策略

@@ -4,12 +4,12 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import lombok.Data;
 
-@Data
-@TableName("role_routes")
 /**
  * 角色与路由关系实体类，用于表示角色与路由之间的多对多关联关系。
  * 每个角色可以关联多个路由，每个路由也可以被多个角色使用。
  */
+@Data
+@TableName("role_routes")
 public class RoleRoutes {
 
     /**

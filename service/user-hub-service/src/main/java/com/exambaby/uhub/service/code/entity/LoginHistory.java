@@ -5,11 +5,11 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
-@TableName("login_history")
 /**
  * 登录历史记录实体类，对应数据库中的login_history表
  */
+@Data
+@TableName("login_history")
 public class LoginHistory {
     /**
      * 主键ID，使用自增策略

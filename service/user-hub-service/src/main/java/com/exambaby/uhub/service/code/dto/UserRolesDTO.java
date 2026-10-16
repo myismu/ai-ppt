@@ -6,11 +6,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 
-@Data
 /**
  * 用户角色关联DTO类，用于表示用户与角色之间的多对多关系。
  * 每个用户可以拥有多个角色，每个角色也可以被多个用户拥有。
  */
+@Data
 public class UserRolesDTO {
     /**
      * 主键ID，唯一标识一条用户与角色的关联关系。

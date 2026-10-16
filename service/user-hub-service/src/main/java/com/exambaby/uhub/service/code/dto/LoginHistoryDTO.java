@@ -6,10 +6,10 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 /**
  * 登录历史数据传输对象
  */
+@Data
 public class LoginHistoryDTO {
     /**
      * 登录历史ID

@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 
-@Data
 /**
  * 角色与路由关系DTO类，用于表示角色与路由之间的多对多关联关系。
  * 每个角色可以关联多个路由，每个路由也可以被多个角色使用。
  */
+@Data
 public class RoleRoutesDTO {
     /**
      * 主键ID，唯一标识一条角色与路由的关联关系。

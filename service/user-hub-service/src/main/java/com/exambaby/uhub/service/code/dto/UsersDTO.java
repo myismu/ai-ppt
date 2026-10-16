@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.Data;
 
-@Data
 /**
  * 用户DTO类，用于存储用户的基本信息和认证信息。
  * 每个用户都有唯一的用户名和密码，用于登录系统。
  */
+@Data
 public class UsersDTO {
 
     /**

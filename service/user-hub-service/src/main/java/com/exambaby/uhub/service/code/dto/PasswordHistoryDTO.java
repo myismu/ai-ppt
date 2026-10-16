@@ -6,10 +6,10 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
 /**
  * 密码历史记录DTO类，用于记录用户的密码修改历史
  */
+@Data
 public class PasswordHistoryDTO {
     /**
      * 主键ID，唯一标识一条密码历史记录

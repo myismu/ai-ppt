@@ -7,12 +7,12 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-@Data
-@TableName("users")
 /**
  * 用户实体类，用于存储用户的基本信息和认证信息。
  * 每个用户都有唯一的用户名和密码，用于登录系统。
  */
+@Data
+@TableName("users")
 public class Users {
 
     /**

@@ -7,6 +7,7 @@ import com.exambaby.common.core.utils.ThreadLocalContext;
 import com.exambaby.uhub.service.code.dto.LoginHistoryDTO;
 import com.exambaby.uhub.service.code.entity.LoginHistory;
 import com.exambaby.uhub.service.code.entity.SystemInfo;
+import com.exambaby.uhub.service.code.service.SystemInfoService;
 import com.exambaby.uhub.service.code.mapper.LoginHistoryMapper;
 import com.exambaby.uhub.service.code.mapstruct.LoginHistoryMapStruct;
 import com.exambaby.uhub.service.code.service.LoginHistoryService;
@@ -19,8 +20,8 @@ public class LoginHistoryServiceImpl implements LoginHistoryService {
 
     private final LoginHistoryMapper loginHistoryMapper;
     private final LoginHistoryMapStruct loginHistoryMapStruct;
-    private final SystemInfoServiceImpl systemInfoService;
-    public LoginHistoryServiceImpl(LoginHistoryMapper loginHistoryMapper, LoginHistoryMapStruct loginHistoryMapStruct, SystemInfoServiceImpl systemInfoService) {
+    private final SystemInfoService systemInfoService;
+    public LoginHistoryServiceImpl(LoginHistoryMapper loginHistoryMapper, LoginHistoryMapStruct loginHistoryMapStruct, SystemInfoService systemInfoService) {
         this.loginHistoryMapper = loginHistoryMapper;
         this.loginHistoryMapStruct = loginHistoryMapStruct;
         this.systemInfoService = systemInfoService;

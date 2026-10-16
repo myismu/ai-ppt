@@ -4,11 +4,11 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
-@TableName("routes")
 /**
  * 路由实体类，对应数据库中的routes表
  */
+@Data
+@TableName("routes")
 public class Routes {
     /**
      * 主键ID，使用自增策略

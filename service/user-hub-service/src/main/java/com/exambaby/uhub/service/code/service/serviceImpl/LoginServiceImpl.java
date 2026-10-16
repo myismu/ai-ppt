@@ -13,7 +13,10 @@ import com.exambaby.uhub.service.code.entity.Users;
 import com.exambaby.uhub.service.code.mapper.LoginMapper;
 import com.exambaby.uhub.service.code.mapper.UsersMapper;
 import com.exambaby.uhub.service.code.mapstruct.UsersMapStruct;
+import com.exambaby.uhub.service.code.service.LoginHistoryService;
 import com.exambaby.uhub.service.code.service.LoginService;
+import com.exambaby.uhub.service.code.service.OnlineUserService;
+import com.exambaby.uhub.service.code.service.SystemInfoService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -34,11 +37,11 @@ public class LoginServiceImpl implements LoginService {
     private final LoginMapper loginMapper;
     private final JwtUtil jwtUtil;
     private final RedisTemplate<String, Object> redisTemplate;
-    private final OnlineUserServiceImpl onlineUserService;
-    private final LoginHistoryServiceImpl loginHistoryService;
-    private final SystemInfoServiceImpl systemInfoService;
+    private final OnlineUserService onlineUserService;
+    private final LoginHistoryService loginHistoryService;
+    private final SystemInfoService systemInfoService;
     private final UsersMapStruct usersMapStruct;
-    public LoginServiceImpl(StringRedisTemplate stringRedisTemplate, UsersMapper usersMapper, LoginMapper loginMapper, JwtUtil jwtUtil, RedisTemplate<String, Object> redisTemplate, OnlineUserServiceImpl onlineUserService, LoginHistoryServiceImpl loginHistoryService, SystemInfoServiceImpl systemInfoService, UsersMapStruct usersMapStruct) {
+    public LoginServiceImpl(StringRedisTemplate stringRedisTemplate, UsersMapper usersMapper, LoginMapper loginMapper, JwtUtil jwtUtil, RedisTemplate<String, Object> redisTemplate, OnlineUserService onlineUserService, LoginHistoryService loginHistoryService, SystemInfoService systemInfoService, UsersMapStruct usersMapStruct) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.usersMapper = usersMapper;
         this.loginMapper = loginMapper;

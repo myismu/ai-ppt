@@ -72,7 +72,7 @@ spring:
   
   devtools:
     restart:
-      enabled: true
+      enabled: false
 
 # ==================== Seata 分布式事务配置 ====================
 seata:

@@ -4,11 +4,11 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Data
-@TableName("roles")
 /**
  * 角色实体类，对应数据库中的roles表
  */
+@Data
+@TableName("roles")
 public class Roles {
     /**
      * 主键ID，使用自增策略
