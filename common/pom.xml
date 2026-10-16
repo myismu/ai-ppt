@@ -183,6 +183,18 @@
             <version>3.5.9</version>
         </dependency>
 
+        <!--
+        ============================================================
+        测试
+        ============================================================
+        -->
+        <!-- Spring Boot Test：JUnit 5 + AssertJ + Mockito + spring-test（版本由根 pom 的 BOM 统一管理） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

@@ -263,6 +263,15 @@
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring.boot.version}</version>
                 </plugin>
+
+                <!-- Maven 测试插件（Surefire） -->
+                <!-- 必须显式指定 3.x：Maven 默认绑定的 2.12.4 不识别 JUnit 5，
+                     会导致单元测试被静默跳过（不执行、也不报错） -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.5</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
