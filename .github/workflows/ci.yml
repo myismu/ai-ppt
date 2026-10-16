@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:                # 任何分支推送都跑（方便你在分支上试）
+  pull_request:        # PR 提交时也跑，合入前就有反馈
+  workflow_dispatch:   # 支持网页上手动点按钮重跑
+
+permissions:
+  contents: read       # 最小权限：CI 只需要读代码
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true   # 连推两次时，自动取消上一次没跑完的
+
+jobs:
+  # ============ 后端：编译 + 测试 ============
+  backend:
+    name: 后端构建与测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven          # 缓存 ~/.m2，第二次起构建快很多
+
+      - name: 编译并打包（含单元测试）
+        run: mvn -B clean package   # 注意：不带 -DskipTests
+
+  # ============ 前端：两个工程分别构建 ============
+  frontend:
+    name: 前端构建
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false          # 一个失败不取消另一个，两个结果都看到
+      matrix:
+        app: [Web/AI-PPT, Web/UserHub-Web]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11           # 和你本地 pnpm 大版本保持一致
+
+      - name: 安装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 安装依赖
+        working-directory: ${{ matrix.app }}
+        run: pnpm install --frozen-lockfile   # CI 必须按锁文件装，避免"本地能跑 CI 挂"
+
+      - name: 构建
+        working-directory: ${{ matrix.app }}
+        run: pnpm build         # 含 vue-tsc 类型检查，慢一点但值得

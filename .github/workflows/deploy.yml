@@ -1,13 +1,12 @@
 name: AI-PPT Production Deploy
 
 on:
-  push:
-    branches: [ "main" ] # 监听 main 分支的提交
+  workflow_dispatch:   # 改为手动触发；有服务器时配好 Secrets 再点按钮部署
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
 
