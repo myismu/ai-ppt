@@ -1,8 +1,8 @@
 -- PPT 服务数据库脚本
 
-CREATE DATABASE IF NOT EXISTS `ppt_service` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+CREATE DATABASE IF NOT EXISTS `ppt_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
-USE `ppt_service`;
+USE `ppt_db`;
 
 -- 1. ppt_project (用户 PPT 项目主表)
 CREATE TABLE IF NOT EXISTS `ppt_project` (

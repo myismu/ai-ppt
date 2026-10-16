@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile
     container_name: ai-ppt-web
     ports:
-      - "80:80"
+      - "3336:80"   # 与本地开发端口一致
     networks:
       - platform-network
 

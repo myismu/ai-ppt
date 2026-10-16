@@ -1,0 +1,84 @@
+name: Images
+
+# 构建并推送镜像到 GHCR（GitHub 容器仓库）
+# 推 main 自动执行，也可在 Actions 页面手动运行
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write   # 推送镜像到 GHCR 需要
+
+jobs:
+  # ============ 后端服务镜像（先在 CI 打出 jar，再按 Dockerfile 打镜像） ============
+  backend-images:
+    name: 后端镜像
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 打包 jar（跳过测试：测试已由 CI 流水线完成）
+        run: mvn -B -s .mvn/ci-settings.xml -DskipTests package
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: 登录 GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 构建并推送 ai-service
+        uses: docker/build-push-action@v6
+        with:
+          context: service/ai-service
+          push: true
+          tags: |
+            ghcr.io/myismu/ai-ppt/ai-service:latest
+            ghcr.io/myismu/ai-ppt/ai-service:${{ github.sha }}
+
+      - name: 构建并推送 ppt-service
+        uses: docker/build-push-action@v6
+        with:
+          context: service/ppt-service
+          push: true
+          tags: |
+            ghcr.io/myismu/ai-ppt/ppt-service:latest
+            ghcr.io/myismu/ai-ppt/ppt-service:${{ github.sha }}
+
+  # ============ 前端镜像（Dockerfile 内部完成 node 构建 + nginx 打包） ============
+  frontend-image:
+    name: 前端镜像
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: 登录 GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 构建并推送 ai-ppt-web
+        uses: docker/build-push-action@v6
+        with:
+          context: Web/AI-PPT
+          push: true
+          tags: |
+            ghcr.io/myismu/ai-ppt/ai-ppt-web:latest
+            ghcr.io/myismu/ai-ppt/ai-ppt-web:${{ github.sha }}
