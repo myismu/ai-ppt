@@ -72,7 +72,7 @@ pnpm dev
 
 父 pom（`com.exambaby:cloud`）与公共库 `common` 来自平台发布的 GitHub Packages 制品：
 
-- 本地开发：`~/.m2/settings.xml` 中声明制品仓库（配置片段见 cloud-platform 的 README；包为公开，拉取无需认证）
+- 本地开发：`~/.m2/settings.xml` 中声明制品仓库与凭据（配置片段见 cloud-platform 的 README；GitHub 的 Maven 注册表需要凭据：用户名填 GitHub 账号，密码填具备 `read:packages` 权限的令牌）
 - CI：使用 `.mvn/ci-settings.xml`
 
 ## 核心接口

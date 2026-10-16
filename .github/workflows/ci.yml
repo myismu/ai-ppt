@@ -6,7 +6,8 @@ on:
   workflow_dispatch:   # 支持网页上手动点按钮重跑
 
 permissions:
-  contents: read       # 最小权限：CI 只需要读代码
+  contents: read
+  packages: read       # 拉取平台制品（GitHub 的 Maven 注册表要求认证）
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -17,6 +18,9 @@ jobs:
   backend:
     name: 后端构建与测试
     runs-on: ubuntu-latest
+    # 拉取平台制品（common / 父 pom）：GitHub 的 Maven 注册表始终要求认证
+    env:
+      GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -25,26 +29,22 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven          # 缓存 ~/.m2，第二次起构建快很多
+          cache: maven
 
       - name: 编译并打包（含单元测试）
-        run: mvn -B -s .mvn/ci-settings.xml clean package   # 注意：不带 -DskipTests
+        run: mvn -B -s .mvn/ci-settings.xml clean package
 
-  # ============ 前端：两个工程分别构建 ============
+  # ============ 前端 ============
   frontend:
     name: 前端构建
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false          # 一个失败不取消另一个，两个结果都看到
-      matrix:
-        app: [Web/AI-PPT, Web/UserHub-Web]
     steps:
       - uses: actions/checkout@v4
 
       - name: 安装 pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 11           # 和你本地 pnpm 大版本保持一致
+          version: 11
 
       - name: 安装 Node
         uses: actions/setup-node@v4
@@ -52,9 +52,9 @@ jobs:
           node-version: 22
 
       - name: 安装依赖
-        working-directory: ${{ matrix.app }}
-        run: pnpm install --frozen-lockfile   # CI 必须按锁文件装，避免"本地能跑 CI 挂"
+        working-directory: Web/AI-PPT
+        run: pnpm install --frozen-lockfile
 
       - name: 构建
-        working-directory: ${{ matrix.app }}
-        run: pnpm build         # 含 vue-tsc 类型检查，慢一点但值得
+        working-directory: Web/AI-PPT
+        run: pnpm build

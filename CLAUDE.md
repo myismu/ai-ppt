@@ -20,7 +20,7 @@ AI-PPT 业务系统仓库：只包含业务侧代码（`ai-service`、`ppt-servi
 
 - 父 pom：`com.exambaby:cloud:1.0.0`（来自 GitHub Packages，`<relativePath/>` 强制走制品仓库）
 - 公共库：`com.exambaby:common`（版本由父 pom 的 `platform.libs.version` 统一管理）
-- 本地：`~/.m2/settings.xml` 声明制品仓库；CI：`mvn -s .mvn/ci-settings.xml`
+- 本地：`~/.m2/settings.xml` 声明制品仓库与凭据；CI：`mvn -s .mvn/ci-settings.xml`（凭据经 GITHUB_TOKEN 环境变量注入）
 
 ## 配置与依赖
 
