@@ -18,8 +18,9 @@ AI-PPT 业务系统仓库：只包含业务侧代码（`ai-service`、`ppt-servi
 
 ## 依赖的平台制品
 
-- 父 pom：`com.exambaby:cloud:1.0.0`（来自 GitHub Packages，`<relativePath/>` 强制走制品仓库）
-- 公共库：`com.exambaby:common`（版本由父 pom 的 `platform.libs.version` 统一管理）
+- 父 pom：`com.exambaby:cloud`（来自 GitHub Packages，`<relativePath/>` 强制走制品仓库）
+- 公共库：`com.exambaby:common`、平台契约库：`com.exambaby:api`（文件服务客户端；版本均由父 pom 的 `platform.libs.version` 统一管理）
+- 仓库内契约库：`ai-ppt-api` 模块（AI 服务客户端，reactor 依赖，不发布制品）
 - 本地：`~/.m2/settings.xml` 声明制品仓库与凭据；CI：`mvn -s .mvn/ci-settings.xml`（凭据经 GITHUB_TOKEN 环境变量注入）
 
 ## 配置与依赖
