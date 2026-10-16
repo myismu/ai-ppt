@@ -28,7 +28,7 @@ jobs:
           cache: maven          # 缓存 ~/.m2，第二次起构建快很多
 
       - name: 编译并打包（含单元测试）
-        run: mvn -B clean package   # 注意：不带 -DskipTests
+        run: mvn -B -s .mvn/ci-settings.xml clean package   # 注意：不带 -DskipTests
 
   # ============ 前端：两个工程分别构建 ============
   frontend:

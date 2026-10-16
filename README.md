@@ -1,148 +1,64 @@
 # AI-PPT
 
-AI-PPT 是一个基于 Vue 3 + Spring Cloud 的智能 PPT 生成与在线编辑系统，支持从主题或文档生成大纲、流式生成幻灯片、在线编辑、项目管理、云端保存以及 PPTX 导出。
+AI-PPT 是一个智能 PPT 生成与在线编辑系统，支持从主题或文档生成大纲、流式生成幻灯片、在线编辑、项目管理、云端保存以及 PPTX 导出。
 
-本仓库整理为可独立部署的 AI-PPT 项目，包含前端编辑器、AI 服务、PPT 服务、文件服务、网关、用户认证服务、公共模块、数据库脚本与 Nacos 配置，不包含题库系统前端与题库服务后端。
+## 架构说明（重要）
+
+本仓库只包含 AI-PPT **业务侧**的代码。用户中心、文件服务、统一网关与公共库由平台仓库 [cloud-platform](../cloud-platform)（GitHub: `myismu/cloud-platform`）提供：
+
+| 能力 | 来源（平台仓库） | 本仓库的使用方式 |
+|---|---|---|
+| 用户中心（认证 / 用户 / 角色） | `user-hub-service` | 接口调用（经统一网关） |
+| 文件服务（上传 / 静态资源 /images /templates /projects） | `file-service` | 接口调用（经统一网关） |
+| 统一网关（路由 / 鉴权 / CORS） | `gateway` | 所有请求的统一入口 |
+| 公共库 `common` | 发布的 Maven 制品 | `pom.xml` 依赖 |
+
+平台代码只有一份源码（在 cloud-platform 仓库），本仓库不复制、不维护其实现。
 
 ## 项目能力
 
-- AI 生成 PPT 大纲
-- AI 根据大纲生成幻灯片内容
+- AI 生成 PPT 大纲 / AI 根据大纲生成幻灯片内容
 - 长文档解析并生成 PPT 大纲
 - AI 文案润色、扩写、缩写、翻译、总结
 - AI 图片生成
 - Web 在线 PPT 编辑
 - PPT 项目创建、保存、加载、收藏、回收站管理
-- 项目资源存储统计
 - PPTX、JSON、图片、PDF 等格式导出
-- 基于网关的前后端分离部署
-
-## 技术栈
-
-### 前端
-
-- Vue 3
-- TypeScript
-- Vite
-- Pinia
-- Vue Router
-- Sass
-- ProseMirror
-- ECharts
-- pptxgenjs
-- html-to-image
-
-### 后端
-
-- Java 17
-- Spring Boot 3.5
-- Spring Cloud 2025
-- Spring Cloud Alibaba
-- Nacos
-- Sentinel
-- OpenFeign
-- WebFlux
-- MyBatis-Plus
-- MySQL
-- Redis
-- Log4j2
-- Apache PDFBox
-- Apache POI
 
 ## 目录结构
 
 ```text
 .
-├── Web/
-│   ├── AI-PPT/                 # AI-PPT 前端工程
-│   └── UserHub-Web/            # 用户认证/用户中心前端
+├── Web/AI-PPT/          # 编辑器前端（Vue 3，端口 3336）
 ├── service/
-│   ├── ai-service/             # AI 能力服务
-│   ├── ppt-service/            # PPT 项目与生成编排服务
-│   ├── file-service/           # 文件上传、访问与资源统计服务
-│   └── user-hub-service/       # 用户认证与用户中心服务
-├── gateway/                    # Spring Cloud Gateway 网关
-├── common/                     # 公共模块
-├── api/                        # Feign/API 模块
-├── SQL/                        # 数据库脚本
-├── naocs/                      # Nacos 配置示例
-├── doc/                        # 项目文档
-├── docker-compose.yml          # 基础部署编排示例
-└── pom.xml                     # Maven 父工程
+│   ├── ai-service/      # AI 服务：大模型接入、生图、文档转 PPT（端口 8083）
+│   └── ppt-service/     # PPT 服务：项目持久化、生成编排（端口 8084）
+├── SQL/                 # 业务数据库脚本（ai_db / ppt_db）
+├── naocs/nacos-dev/     # 业务服务的 Nacos 配置模板
+├── .mvn/ci-settings.xml # CI 专用 Maven 配置（声明平台制品仓库）
+└── pom.xml              # Maven 父工程（继承平台父 pom）
 ```
 
-## 环境要求
+## 本地启动
 
-- Node.js >= 20
-- pnpm 或 npm
-- JDK >= 17
-- Maven >= 3.8
-- MySQL
-- Redis
-- Nacos
+### 0. 前置：启动平台（含中间件）
 
-## 快速启动
+```bash
+cd ../cloud-platform
+docker-compose up -d --build     # Nacos / MySQL / Redis / 网关 / 用户中心 / 文件服务
+```
 
-### 1. 初始化数据库
+也可以在 IDE 中按平台 README 的说明本地启动。
 
-根据 `SQL/` 目录下的脚本创建数据库表与初始化数据。
-
-常见脚本包括：
-
-- `SQL/ai_db.sql`
-- `SQL/user_hub.sql`
-
-请根据你的数据库环境调整库名、账号和密码。
-
-### 2. 启动基础组件
-
-准备并启动：
-
-- MySQL
-- Redis
-- Nacos
-
-也可以参考根目录的 `docker-compose.yml` 自行调整后启动相关基础服务。
-
-### 3. 导入 Nacos 配置
-
-参考 `naocs/nacos-dev/` 下的配置文件，为以下服务准备配置：
-
-- gateway
-- user-hub-service
-- file-service
-- ai-service
-- ppt-service
-
-部署前请重点修改：
-
-- MySQL 地址、账号、密码
-- Redis 地址和密码
-- JWT Secret
-- 文件上传路径和访问地址
-- AI 模型供应商、模型名称、API Key、Base URL
-
-不要将真实密钥提交到公开仓库。
-
-### 4. 启动后端服务
-
-在项目根目录构建后端：
+### 1. 启动业务服务
 
 ```bash
 mvn clean package
 ```
 
-然后依次启动：
+依次启动 `AiApplication`、`PptApplication`；对应的 Nacos 配置从平台的开发命名空间读取（本仓库 `naocs/nacos-dev/` 为模板）。
 
-1. `gateway`
-2. `service/user-hub-service`
-3. `service/file-service`
-4. `service/ai-service`
-5. `service/ppt-service`
-
-也可以在 IDE 中直接启动各模块的 Spring Boot 启动类。
-
-### 5. 启动 AI-PPT 前端
+### 2. 启动前端
 
 ```bash
 cd Web/AI-PPT
@@ -150,75 +66,32 @@ pnpm install
 pnpm dev
 ```
 
-默认访问：
+访问 http://127.0.0.1:3336 （`/api`、`/templates`、`/projects`、`/img`、`/image` 都代理到平台网关 8080）。
 
-```text
-http://127.0.0.1:3336/
-```
+## Maven 依赖说明
 
-生产构建：
+父 pom（`com.exambaby:cloud`）与公共库 `common` 来自平台发布的 GitHub Packages 制品：
 
-```bash
-pnpm build
-```
-
-### 6. 启动用户中心前端
-
-如果需要登录、注册、用户中心等页面，可启动：
-
-```bash
-cd Web/UserHub-Web
-pnpm install
-pnpm dev
-```
-
-## 前端说明
-
-AI-PPT 前端详细说明见：
-
-```text
-Web/AI-PPT/README.md
-```
-
-该目录包含编辑器源码、前端构建配置、Dockerfile、Nginx 配置和前端环境变量示例。
+- 本地开发：`~/.m2/settings.xml` 中声明制品仓库（配置片段见 cloud-platform 的 README；包为公开，拉取无需认证）
+- CI：使用 `.mvn/ci-settings.xml`
 
 ## 核心接口
 
 ### PPT 服务
 
-- `POST /ppt/create`：创建 PPT 项目
-- `POST /ppt/save`：保存 PPT 项目
-- `GET /ppt/list`：获取项目列表
-- `GET /ppt/detail/{id}`：获取项目详情
-- `DELETE /ppt/delete/{id}`：移入回收站
-- `PUT /ppt/restore/{id}`：恢复项目
-- `DELETE /ppt/hardDelete/{id}`：彻底删除项目
-- `PUT /ppt/star/{id}`：收藏/取消收藏
-- `GET /ppt/templates`：获取 PPT 模板
-- `POST /ppt/outline`：流式生成 PPT 大纲
-- `POST /ppt/generate`：流式生成幻灯片内容
-- `POST /ppt/writing`：AI 文案处理
-- `POST /ppt/image`：AI 图片生成
+- `POST /ppt/create` 创建项目 · `POST /ppt/save` 保存 · `GET /ppt/list` 列表
+- `GET /ppt/detail/{id}` 详情 · `DELETE /ppt/delete/{id}` 回收站 · `PUT /ppt/restore/{id}` 恢复
+- `GET /ppt/templates` 模板列表 · `POST /ppt/outline` 流式生成大纲 · `POST /ppt/generate` 流式生成内容
 
 ### AI 服务
 
-- `GET /ai/models`：获取可用模型列表
-- `POST /ai/writing`：AI 文本流式处理
-- `POST /ai/document-to-ppt`：文档转 PPT 大纲
-- `POST /ai/image`：AI 生图
+- `GET /ai/models` 模型列表 · `POST /ai/writing` 文本流式处理 · `POST /ai/document-to-ppt` 文档转大纲 · `POST /ai/image` 生图
 
 ## 配置安全说明
 
-本项目需要配置数据库、Redis、JWT、AI 模型密钥等敏感信息。公开部署或提交代码前，请确保：
-
-- 不提交真实 `.env` 文件
-- 不提交真实 API Key
-- 不提交生产数据库密码
-- 不提交上传目录中的用户文件
-- 使用环境变量或 Nacos 私有配置管理敏感信息
+- 仓库内敏感值均为占位符，真实值通过环境变量或 Nacos 私有配置注入
+- 不提交真实 `.env`、API Key、数据库密码
 
 ## 说明
 
-前端编辑器基于 PPTist 二次开发，保留了 Web 幻灯片编辑、演示和导出等核心能力，并在此基础上接入 AI 生成、项目持久化和后端微服务能力。
-
-请遵守原项目及本仓库相关开源协议要求，保留必要的版权与许可证声明。
+前端编辑器基于 PPTist 二次开发，保留 Web 幻灯片编辑、演示与导出能力，并接入 AI 生成与后端微服务。请遵守原项目及本仓库的开源协议要求。

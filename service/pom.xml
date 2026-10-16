@@ -6,18 +6,16 @@
 
     <parent>
         <groupId>com.exambaby</groupId>
-        <artifactId>cloud</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <artifactId>ai-ppt</artifactId>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>service</artifactId>
     <packaging>pom</packaging>
 
     <modules>
-        <module>user-hub-service</module>
         <module>ai-service</module>
         <module>ppt-service</module>
-        <module>file-service</module>
     </modules>
 
     <properties>
