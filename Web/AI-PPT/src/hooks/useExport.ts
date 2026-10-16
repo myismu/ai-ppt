@@ -36,6 +36,14 @@ export default () => {
   })
 
   const exporting = ref(false)
+  const exportProgress = ref(0)
+  const exportLogs = ref<string[]>([])
+
+  // 重置导出进度状态
+  const resetExportState = () => {
+    exportProgress.value = 0
+    exportLogs.value = []
+  }
 
   // 导出图片
   const exportImage = (domRef: HTMLElement, format: string, quality: number, ignoreWebfont = true) => {
@@ -66,6 +74,8 @@ export default () => {
   // 导出图片版PPTX
   const exportImagePPTX = (domRefs: NodeListOf<Element>) => {
     exporting.value = true
+    resetExportState()
+    exportLogs.value.push('> [ENGINE] 初始化纯图版导出模式...')
     
     setTimeout(() => {
       const pptx = new pptxgen()
@@ -75,7 +85,10 @@ export default () => {
         width: 1600,
       }
 
-      const promiseArr = []
+      const totalSlides = domRefs.length
+      exportLogs.value.push(`> [INFO] 共 ${totalSlides} 页需要渲染`)
+
+      const promiseArr: (() => Promise<string>)[] = []
       for (const domRef of domRefs) {
         const foreignObjectSpans = domRef.querySelectorAll('foreignObject [xmlns]')
         foreignObjectSpans.forEach(spanRef => spanRef.removeAttribute('xmlns'))
@@ -85,7 +98,8 @@ export default () => {
       }
 
       Promise.all(promiseArr.map(func => func())).then(imgs => {
-        for (const data of imgs) {
+        for (let i = 0; i < imgs.length; i++) {
+          const data = imgs[i]
           const pptxSlide = pptx.addSlide()
           pptxSlide.addImage({
             data,
@@ -94,8 +108,16 @@ export default () => {
             w: viewportSize.value / ratioPx2Inch.value,
             h: viewportSize.value * viewportRatio.value / ratioPx2Inch.value,
           })
+          exportProgress.value = Math.round(((i + 1) / totalSlides) * 85)
+          exportLogs.value.push(`✓ 第 ${i + 1}/${totalSlides} 页渲染完成`)
         }
-        pptx.writeFile({ fileName: `${title.value}.pptx` }).then(() => exporting.value = false)
+        exportLogs.value.push('> [ENGINE] 正在打包 PPTX 文件...')
+        exportProgress.value = 90
+        pptx.writeFile({ fileName: `${title.value}.pptx` }).then(() => {
+          exportProgress.value = 100
+          exportLogs.value.push('✓ 导出成功！文件已开始下载')
+          setTimeout(() => { exporting.value = false }, 1500)
+        })
       }).catch(() => {
         exporting.value = false
         message.error('导出失败')
@@ -468,6 +490,9 @@ export default () => {
   // 导出PPTX文件
   const exportPPTX = (_slides: Slide[], masterOverwrite: boolean, ignoreMedia: boolean) => {
     exporting.value = true
+    resetExportState()
+    const totalSlides = _slides.length
+    exportLogs.value.push(`> [ENGINE] 标准模式启动，共 ${totalSlides} 页幻灯片`)
     const pptx = new pptxgen()
 
     if (viewportRatio.value === 0.625) pptx.layout = 'LAYOUT_16x10'
@@ -490,8 +515,11 @@ export default () => {
       })
     }
 
-    for (const slide of _slides) {
+    for (let slideIdx = 0; slideIdx < _slides.length; slideIdx++) {
+      const slide = _slides[slideIdx]
       const pptxSlide = pptx.addSlide()
+      exportProgress.value = Math.round(((slideIdx + 1) / totalSlides) * 80)
+      exportLogs.value.push(`> [RENDER] 正在处理第 ${slideIdx + 1}/${totalSlides} 页...`)
 
       if (slide.background) {
         const background = slide.background
@@ -984,7 +1012,13 @@ export default () => {
     }
 
     setTimeout(() => {
-      pptx.writeFile({ fileName: `${title.value}.pptx` }).then(() => exporting.value = false).catch(() => {
+      exportLogs.value.push('> [ENGINE] 正在打包 PPTX 文件...')
+      exportProgress.value = 90
+      pptx.writeFile({ fileName: `${title.value}.pptx` }).then(() => {
+        exportProgress.value = 100
+        exportLogs.value.push('✓ 导出成功！文件已开始下载')
+        setTimeout(() => { exporting.value = false }, 1500)
+      }).catch(() => {
         exporting.value = false
         message.error('导出失败')
       })
@@ -993,6 +1027,8 @@ export default () => {
 
   return {
     exporting,
+    exportProgress,
+    exportLogs,
     exportImage,
     exportImagePPTX,
     exportJSON,

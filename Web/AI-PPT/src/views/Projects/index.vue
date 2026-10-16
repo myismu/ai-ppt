@@ -21,7 +21,7 @@
           <i-icon-park-outline:folder-block class="icon" />
           <span>我的创作</span>
         </div>
-        <div class="menu-item">
+        <div class="menu-item" :class="{ active: currentTab === 'star' }" @click="switchTab('star')">
           <i-icon-park-outline:star class="icon" />
           <span>收藏夹</span>
         </div>
@@ -34,8 +34,8 @@
       <div class="sidebar-footer">
         <div class="storage-card">
           <div class="label">云端存储空间</div>
-          <div class="progress-mini"><div class="fill" style="width: 45%"></div></div>
-          <div class="detail">已使用 45% (2.2GB / 5GB)</div>
+          <div class="progress-mini"><div class="fill" :style="{ width: storagePercent + '%' }"></div></div>
+          <div class="detail">已使用 {{ storagePercent }}% ({{ storageUsedDisplay }} / {{ storageTotalDisplay }})</div>
         </div>
       </div>
     </aside>
@@ -64,7 +64,7 @@
         </div>
       </header>
 
-      <!-- 欢迎与操作区 (回收站不显示) -->
+      <!-- 欢迎与操作区 -->
       <section class="welcome-section" v-if="currentTab === 'all'">
         <div class="text-group">
           <h2>欢迎回来，{{ userInfo?.username || '创作者' }}</h2>
@@ -74,6 +74,13 @@
           <i-icon-park-outline:plus class="icon" />
           <span>开启 AI 智能创作</span>
         </button>
+      </section>
+
+      <section class="welcome-section" v-else-if="currentTab === 'star'">
+        <div class="text-group">
+          <h2>我的收藏</h2>
+          <p>快速访问您标记星标的演示文稿。</p>
+        </div>
       </section>
       
       <section class="welcome-section" v-else>
@@ -96,8 +103,8 @@
           <div class="empty-art">
             <i-icon-park-outline:doc-detail class="icon" />
           </div>
-          <h3>{{ currentTab === 'all' ? '开启您的第一篇杰作' : '回收站空空如也' }}</h3>
-          <p>{{ currentTab === 'all' ? '让 AI 助您完成从灵感到演示的全过程' : '这里没有任何被删除的项目' }}</p>
+          <h3>{{ currentTab === 'all' ? '开启您的第一篇杰作' : currentTab === 'star' ? '还没有收藏的项目' : '回收站空空如也' }}</h3>
+          <p>{{ currentTab === 'all' ? '让 AI 助您完成从灵感到演示的全过程' : currentTab === 'star' ? '点击项目卡片上的 ★ 即可收藏' : '这里没有任何被删除的项目' }}</p>
           <button class="btn-ghost" @click="handleCreate" v-if="currentTab === 'all'">立即尝试</button>
         </div>
 
@@ -113,9 +120,10 @@
             <div class="card-inner">
               <div class="card-preview-v2">
                 <div class="preview-overlay">
-                  <!-- 常规模式：编辑与删除 -->
-                  <template v-if="currentTab === 'all'">
+                  <!-- 常规/收藏模式：编辑、星标与删除 -->
+                  <template v-if="currentTab === 'all' || currentTab === 'star'">
                     <div class="p-btn edit" @click.stop="handleOpen(project.id)" title="进入编辑"><i-icon-park-outline:edit /></div>
+                    <div class="p-btn star" :class="{ starred: project.isStar === 1 }" @click.stop="handleToggleStar(project)" :title="project.isStar === 1 ? '取消收藏' : '添加收藏'"><i-icon-park-outline:star /></div>
                     <div class="p-btn del" @click.stop="handleDelete(project)" title="移至回收站"><i-icon-park-outline:delete /></div>
                   </template>
                   <!-- 回收站模式：恢复与彻底删除 -->
@@ -124,8 +132,16 @@
                     <div class="p-btn del" @click.stop="handleHardDelete(project)" title="永久删除"><i-icon-park-outline:caution /></div>
                   </template>
                 </div>
-                <!-- 动态生成的艺术背景 -->
-                <div class="art-bg" :style="{ background: getArtBg(index) }">
+                <!-- 星标角标 -->
+                <div class="star-badge" v-if="project.isStar === 1 && currentTab !== 'star'">
+                  <i-icon-park-outline:star />
+                </div>
+                <!-- 封面图或渐变占位 -->
+                <template v-if="project.coverUrl">
+                  <img class="cover-img" :src="project.coverUrl" :alt="project.title" />
+                  <span class="page-tag">{{ project.slideCount || 0 }} P</span>
+                </template>
+                <div class="art-bg" :style="{ background: getArtBg(index) }" v-else>
                   <i-icon-park-outline:ppt class="bg-icon" />
                   <span class="page-tag">{{ project.slideCount || 0 }} P</span>
                 </div>
@@ -175,7 +191,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import api from '@/services'
@@ -186,6 +202,7 @@ interface ProjectItem {
   title: string
   coverUrl: string | null
   slideCount: number
+  isStar: number
   status: number
   createTime: string
   updateTime: string
@@ -199,17 +216,39 @@ const loading = ref(true)
 const deleteTarget = ref<ProjectItem | null>(null)
 const hardDeleteTarget = ref<ProjectItem | null>(null) // 彻底删除目标
 
-// 当前标签页: 'all' 表示我的创作, 'recycle' 表示回收站
-const currentTab = ref<'all' | 'recycle'>('all')
+// 当前标签页: 'all' 表示我的创作, 'star' 表示收藏夹, 'recycle' 表示回收站
+const currentTab = ref<'all' | 'star' | 'recycle'>('all')
+
+// 云存储空间相关
+const storageUsedMB = ref(0)
+const storageTotalMB = ref(100) // 默认配额 100MB
+const storagePercent = computed(() => {
+  if (storageTotalMB.value <= 0) return 0
+  return Math.min(Math.round(storageUsedMB.value / storageTotalMB.value * 100), 100)
+})
+const storageUsedDisplay = computed(() => {
+  if (storageUsedMB.value >= 1024) return (storageUsedMB.value / 1024).toFixed(1) + 'GB'
+  return storageUsedMB.value.toFixed(1) + 'MB'
+})
+const storageTotalDisplay = computed(() => {
+  if (storageTotalMB.value >= 1024) return (storageTotalMB.value / 1024).toFixed(1) + 'GB'
+  return storageTotalMB.value + 'MB'
+})
 
 // 获取项目列表
 const fetchProjects = async () => {
   loading.value = true
   try {
-    // 如果是回收站，传入 status = -1
-    const status = currentTab.value === 'recycle' ? -1 : undefined
-    const res = await api.listProjects(status)
-    if (res.code === 200 && res.data) projects.value = res.data
+    if (currentTab.value === 'star') {
+      // 收藏夹：调用独立接口
+      const res = await api.listStarredProjects()
+      if (res.code === 200 && res.data) projects.value = res.data
+    } else {
+      // 如果是回收站，传入 status = -1
+      const status = currentTab.value === 'recycle' ? -1 : undefined
+      const res = await api.listProjects(status)
+      if (res.code === 200 && res.data) projects.value = res.data
+    }
   } catch (err) {
     console.error(err)
   } finally {
@@ -217,11 +256,44 @@ const fetchProjects = async () => {
   }
 }
 
+// 获取云存储空间信息
+const fetchStorageInfo = async () => {
+  try {
+    const res = await api.getStorageInfo()
+    if (res.code === 200 && res.data) {
+      storageUsedMB.value = res.data.usedMB || 0
+      // 如果用户信息中有磁盘配额，则使用用户配额
+      if (userInfo.value?.diskQuotaMb) {
+        storageTotalMB.value = userInfo.value.diskQuotaMb
+      }
+    }
+  } catch (err) {
+    console.error('获取存储空间信息失败', err)
+  }
+}
+
 // 切换标签页
-const switchTab = (tab: 'all' | 'recycle') => {
+const switchTab = (tab: 'all' | 'star' | 'recycle') => {
   if (currentTab.value === tab) return
   currentTab.value = tab
   fetchProjects()
+}
+
+// 切换收藏状态
+const handleToggleStar = async (project: ProjectItem) => {
+  try {
+    const res = await api.toggleStar(project.id)
+    if (res.code === 200) {
+      project.isStar = res.data
+      message.success(res.data === 1 ? '已收藏' : '已取消收藏')
+      // 如果在收藏夹中取消收藏，则从列表中移除
+      if (currentTab.value === 'star' && res.data === 0) {
+        projects.value = projects.value.filter(p => p.id !== project.id)
+      }
+    }
+  } catch (err) {
+    message.error('操作失败')
+  }
 }
 
 // 新建项目
@@ -321,7 +393,10 @@ const getArtBg = (index: number) => {
   return gradients[index % gradients.length]
 }
 
-onMounted(() => fetchProjects())
+onMounted(() => {
+  fetchProjects()
+  fetchStorageInfo()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -476,7 +551,7 @@ onMounted(() => fetchProjects())
   .card-inner {
     cursor: pointer; position: relative;
     &:hover {
-      .card-preview-v2 { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); .preview-overlay { opacity: 1; } }
+      .card-preview-v2 { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); .preview-overlay { opacity: 1; } .cover-img { transform: scale(1.05); } }
       .card-info-v2 .title { color: #1e293b; }
     }
   }
@@ -484,6 +559,15 @@ onMounted(() => fetchProjects())
   .card-preview-v2 {
     height: 160px; border-radius: 20px; overflow: hidden; position: relative; transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     background: #e2e8f0; box-shadow: 0 10px 20px rgba(0,0,0,0.04);
+
+    .cover-img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    > .page-tag {
+      position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.35); backdrop-filter: blur(8px); color: #fff; padding: 2px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; z-index: 1;
+    }
     
     .art-bg { 
       width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative;
@@ -495,8 +579,15 @@ onMounted(() => fetchProjects())
       position: absolute; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; gap: 12px; opacity: 0; transition: opacity 0.3s; z-index: 2;
       .p-btn { 
         width: 38px; height: 38px; border-radius: 12px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #1e293b; transition: all 0.2s;
-        &:hover { transform: scale(1.1); &.del { color: #ef4444; } &.edit { color: #1e293b; } }
+        &:hover { transform: scale(1.1); &.del { color: #ef4444; } &.edit { color: #1e293b; } &.star { color: #f59e0b; } &.starred { color: #f59e0b; background: #fef3c7; } }
       }
+    }
+
+    .star-badge {
+      position: absolute; top: 10px; left: 10px; z-index: 3;
+      width: 28px; height: 28px; border-radius: 8px; background: rgba(245, 158, 11, 0.9); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
     }
   }
 

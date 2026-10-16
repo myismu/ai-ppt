@@ -87,7 +87,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, nextTick, ref, watch, useTemplateRef } from 'vue'
+import { computed, nextTick, onMounted, ref, watch, useTemplateRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMainStore, useSlidesStore, useKeyboardStore } from '@/store'
 import type { Slide, SlideTheme } from '@/types/slides'
@@ -118,6 +118,30 @@ const { changeSlideLayout } = useAIPPT()
 const selectedSlidesIndex = computed(() => [..._selectedSlidesIndex.value, slideIndex.value])
 
 const presetLayoutPopoverVisible = ref(false)
+
+// 确保模板数据可用（若编辑器未经 AI 面板直接打开，模板 store 可能为空）
+onMounted(async () => {
+  if (slidesStore.templates.length === 0) {
+    try {
+      const res = await api.getTemplates()
+      if (res.code === 200 && res.data) {
+        const cloudTemplates = res.data.map((item: any) => {
+          const fileUrl = item.fileUrl || item.file_url || ''
+          return {
+            id: fileUrl || `cloud_${item.id}`,
+            name: item.name,
+            cover: item.coverUrl,
+            fileUrl,
+            origin: '后端预置'
+          }
+        })
+        slidesStore.setTemplates(cloudTemplates)
+      }
+    } catch (err) {
+      console.error('Thumbnails: 加载模板列表失败', err)
+    }
+  }
+})
 
 const hasSection = computed(() => {
   return slides.value.some(item => item.sectionTag)
@@ -270,10 +294,30 @@ const contextmenusThumbnailItem = (): ContextmenuItem[] => [
   {
     text: 'AI 智能换布局',
     handler: async () => {
-      const templateId = currentSlide.value.styleKey || 'template_1'
+      const styleKey = currentSlide.value.styleKey || ''
+
+      // 优先级 1: styleKey 本身就是合法文件路径（新生成的 PPT）
+      let fileUrl = styleKey.includes('/') ? styleKey : ''
+
+      // 优先级 2: styleKey 是旧格式 (cloud_XXX)，从模板库反查 fileUrl
+      if (!fileUrl && styleKey) {
+        const tmpl = slidesStore.templates.find((t: any) => t.id === styleKey)
+        fileUrl = tmpl?.fileUrl || ''
+      }
+
+      // 优先级 3: 兜底使用第一个模板
+      if (!fileUrl) {
+        fileUrl = slidesStore.templates[0]?.fileUrl || ''
+      }
+
+      if (!fileUrl) {
+        console.warn('无法确定模板来源，无法智能换布局')
+        return
+      }
+
       mainStore.setDisableHotkeysState(true)
       try {
-        const templateData = await api.getTemplateData(templateId)
+        const templateData = await api.getTemplateData(fileUrl)
         if (templateData && templateData.slides) {
           changeSlideLayout(currentSlide.value.id, templateData.slides)
         }

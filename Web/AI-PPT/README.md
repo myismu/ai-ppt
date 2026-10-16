@@ -1,262 +1,285 @@
-<p align="center">
-    <img src='/public/logo.png' />
-</p>
+# AI-PPT
 
-<p align="center">
-    <a href="https://www.github.com/pipipi-pikachu/PPTist/stargazers" target="_black"><img src="https://img.shields.io/github/stars/pipipi-pikachu/PPTist?logo=github" alt="stars" /></a>
-    <a href="https://www.github.com/pipipi-pikachu/PPTist/network/members" target="_black"><img src="https://img.shields.io/github/forks/pipipi-pikachu/PPTist?logo=github" alt="forks" /></a>
-    <a href="https://www.github.com/pipipi-pikachu/PPTist/blob/master/LICENSE" target="_black"><img src="https://img.shields.io/github/license/pipipi-pikachu/PPTist" alt="license" /></a>
-    <a href="https://www.typescriptlang.org" target="_black"><img src="https://img.shields.io/badge/language-TypeScript-blue.svg" alt="language"></a>
-    <a href="https://github.com/pipipi-pikachu/PPTist/issues" target="_black"><img src="https://img.shields.io/github/issues-closed/pipipi-pikachu/PPTist.svg" alt="issue"></a>
-    <a href="https://gitee.com/pptist/PPTist" target="_black"><img src="https://gitee.com/pptist/PPTist/badge/star.svg?theme=gvp" alt="gitee"></a>
-    <a href="https://gitcode.com/pipipi-pikachu/PPTist" target="_black"><img src="https://gitcode.com/pipipi-pikachu/PPTist/star/badge.svg" alt="gitcode"></a>
-</p>
+基于 Vue 3、TypeScript 与 Spring Cloud 的智能 PPT 生成与在线编辑系统。项目在 PPTist 的 Web 幻灯片编辑能力基础上，接入后端 AI 生成、文档解析、项目管理、云端保存与 PPTX 导出能力，适合用于学习、课程汇报、产品方案、工作总结等演示文稿的快速创作。
 
-[简体中文](README_zh.md) | English
+## 项目简介
 
+AI-PPT 面向“从主题或文档快速生成可编辑 PPT”的使用场景，支持用户输入主题、上传长文档或提供创作要求，由 AI 生成 PPT 大纲和幻灯片内容，再在 Web 编辑器中继续调整版式、文字、图片、图表、动画等元素，最终导出为 PPTX 文件。
 
-# 🎨 PPTist
-**PowerPoint-ist（/'pauəpɔintist/）**, A web-based presentation (slideshow) application. This application replicates most of the commonly used features of Microsoft Office PowerPoint. It supports various essential element types such as text, images, shapes, lines, charts, tables, videos, audio, and formulas. You can edit and present slides directly in a web browser.
+项目包含前端编辑器和后端微服务能力：
 
-**Try it online👉：[https://pipipi-pikachu.github.io/PPTist/](https://pipipi-pikachu.github.io/PPTist/)**
+- 前端：Vue 3 + TypeScript + Vite，基于 PPTist 二次开发。
+- 后端：Spring Boot / Spring Cloud 微服务，提供 PPT 项目管理、AI 文本生成、AI 生图、文档转大纲、文件存储等接口。
+- AI 能力：支持文本流式生成、文案润色/扩写/摘要/翻译、AI 生图、长文档转 PPT 大纲等能力。
 
-> China Mirrors (Synchronized Regularly): [Gitee](https://gitee.com/pptist/PPTist)、[GitCode](https://gitcode.com/pipipi-pikachu/PPTist)
+## 功能特性
 
+### AI 生成 PPT
 
-# ✨ Highlights
-1. **Easy Development**: Built with Vue 3.x and TypeScript, it does not rely on UI component libraries and avoids third-party components as much as possible. This makes styling customization easier and functionality extension more convenient.
-2. **User Friendly**: It offers a context menu available everywhere, dozens of keyboard shortcuts, and countless editing detail optimizations, striving to replicate a desktop application-level experience.
-3. **Feature Rich**: Supports most of the commonly used elements and functionalities found in PowerPoint, supports generate PPT by AI, supports exporting in various formats, and offers basic editing and previewing on mobile devices.
+- 根据主题生成 PPT 大纲
+- 根据大纲流式生成幻灯片内容
+- 支持长文档解析并生成 PPT 大纲
+- 支持选择语言、风格、主题和模型
+- 支持 AI 文案处理：润色、扩写、缩写、翻译、总结等
+- 支持 AI 图片生成并插入幻灯片
 
+### 在线 PPT 编辑
 
-# 👀 Front-Row Reminder
-1. The target audience for this project is developers with web slide development needs and basic web development experience. The provided link is for demonstration purposes only and does not offer any online services. This project should not be used directly as a tool, nor does it support out-of-the-box use. If you simply need a ready-made service or tool, please consider other products.
-2. Here are some summarized [Frequently Asked Questions](/doc/Q&A.md). When raising Issues or submitting PRs for the first time, be sure to read this document in advance.
-3. For commercial use, please refer to [商业用途](#-商业用途)
+- 支持文字、图片、形状、线条、图表、表格、音视频、公式等常见元素
+- 支持拖拽、缩放、旋转、多选、组合、图层调整、对齐与分布
+- 支持富文本编辑、主题设置、背景设置、备注、动画、放映等能力
+- 支持撤销/重做、快捷键、右键菜单、缩略图导航
+- 支持移动端基础预览与编辑
 
+### 项目管理
 
-# 🧩 Project Positioning
-> This project is strictly positioned as a Web Slide Editing/Presentation Application. It is not intended to be an ~~AI PPT generator, low-code platform, or image editor~~. The following are the recommendation levels for common use cases:
+- 创建、保存、加载 PPT 项目
+- 项目列表与详情查看
+- 收藏项目
+- 回收站、恢复与彻底删除
+- 统计项目关联资源的存储占用
+- 支持云端持久化保存 AI 生成结果和编辑内容
 
-- **Low-code Platforms / H5 Editors / Image Editors / Whiteboards** (Recommendation: Not Recommended): We suggest choosing open-source projects specifically designed for those purposes.
-- **PPT File Preview Tool** (Recommendation: ⭐): The ability to import .pptx files is limited (roughly 60% fidelity). Unless your requirements for preview accuracy are low and you only need basic content display, this is not recommended.
-- **AI PPT Generation Tool** (Recommendation: ⭐⭐): While the project provides basic template-based AI generation, it is not the core focus. As AI technology evolves (moving from templates to HTML-based or image-based generation), this project will not necessarily follow those trends. However, if you wish to build a template-based AI generator and are willing to implement your own generation logic, PPTist’s robust editing capabilities make it a strong foundation.
-- **Office PPT Authoring Tool** (Recommendation: ⭐⭐): PPTist supports many common Office features and basic .pptx export. However, exports are not 100% identical to the original, and as mentioned, import capabilities are limited. Choose this only if you can accept these limitations.
-- **Web Slide Editing/Presentation App** (Recommendation: ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐): This is the primary use case. The core strengths of PPTist are its editing capabilities and user experience. You can build upon this project to customize or add unique nodes and features tailored to your specific needs, where Office compatibility is not the ultimate goal. **Summary: Our vision is for you to use PPTist to create a presentation product that is distinct from Microsoft Office, rather than just using it as a middleman for editing Office files.**
+### 导入导出
 
+- 导出 PPTX
+- 导出 JSON、图片、PDF 等格式
+- 支持 `.pptist` 格式导入导出
+- 支持将编辑器中的页面内容保存为后端项目数据
 
-# 🚀 Installation
-> node.js version >= 20
+## 技术栈
 
+### 前端
+
+- Vue 3
+- TypeScript
+- Vite
+- Pinia
+- Vue Router
+- Sass
+- ProseMirror
+- ECharts
+- pptxgenjs
+- html-to-image
+- Dexie
+
+### 后端
+
+- Java 17
+- Spring Boot 3.5
+- Spring Cloud 2025
+- Spring Cloud Alibaba
+- Nacos
+- Sentinel
+- OpenFeign
+- WebFlux
+- MyBatis-Plus
+- Redis
+- MySQL
+- Log4j2
+- Apache PDFBox
+- Apache POI
+
+## 目录结构
+
+```text
+.
+├── Web/
+│   └── AI-PPT/                 # AI-PPT 前端工程
+│       ├── src/                # 前端源码
+│       ├── public/             # 静态资源
+│       ├── package.json        # 前端依赖与脚本
+│       └── vite.config.ts      # Vite 配置
+├── service/
+│   ├── ai-service/             # AI 能力服务：文本生成、生图、文档转 PPT
+│   ├── ppt-service/            # PPT 服务：项目管理、生成编排、模板配置
+│   └── file-service/           # 文件服务：上传、资源访问、存储统计
+├── gateway/                    # API 网关
+├── common/                     # 公共模块
+├── api/                        # Feign/API 模块
+└── pom.xml                     # 后端 Maven 父工程
 ```
-npm install
 
+## 快速开始
+
+### 环境要求
+
+- Node.js >= 20
+- pnpm 或 npm
+- JDK >= 17
+- Maven >= 3.8
+- MySQL
+- Redis
+- Nacos
+
+### 启动前端
+
+进入前端目录：
+
+```bash
+cd Web/AI-PPT
+```
+
+安装依赖：
+
+```bash
+pnpm install
+```
+
+启动开发服务：
+
+```bash
+pnpm dev
+```
+
+默认访问地址：
+
+```text
+http://127.0.0.1:5173/
+```
+
+如果使用 npm，也可以执行：
+
+```bash
+npm install
 npm run dev
 ```
-Browser access: http://127.0.0.1:5173/
 
+### 构建前端
 
-# 📚 Features
-### Basic Features
-- History (undo, redo)
-- Shortcuts
-- Right-click menu
-- Export local files (PPTX, JSON, images, PDF)
-- Import and export pptist files
-- Print
-- AI PPT
-### Slide Page Editing
-- Add/delete pages
-- Copy/paste pages
-- Adjust page order
-- Create sections
-- Background settings (solid color, gradient, image)
-- Set canvas size
-- Gridlines
-- Rulers
-- Canvas zoom and move
-- Theme settings
-- Extract slides style
-- Speaker notes (rich text)
-- Slide templates
-- Transition animations
-- Element animations (entrance, exit, emphasis)
-- Selection panel (hide elements, layer sorting, element naming)
-- Labels for Page and Node Types (usable for template-related features)
-- Find/replace
-- Annotations
-### Slide Element Editing
-- Add/delete elements
-- Copy/paste elements
-- Drag and move elements
-- Rotate elements
-- Scale elements
-- Multiple element selection (marquee, point selection)
-- Group multiple elements
-- Batch edit multiple elements
-- Lock elements
-- Magnetic alignment of elements (move and scale)
-- Adjust element layer
-- Align elements to canvas
-- Align elements to other elements
-- Evenly distribute multiple elements
-- Drag to add text and images
-- Paste external images
-- Set element coordinates, size, and rotation
-- Element hyperlinks (link to webpage, link to other slide pages)
-#### Text
-- Rich text editing (color, highlight, font, font size, bold, italic, underline, strikethrough, subscript, inline code, quote, hyperlink, alignment, numbering, bullet points, paragraph indent, clear formatting)
-- Line height
-- Character spacing
-- Paragraph spacing
-- First line indent
-- Fill color
-- Border
-- Shadow
-- Transparency
-- Vertical text
-- AI Rewrite/Expand/Abbreviate
-#### Images
-- Crop (custom, shape, aspect ratio)
-- Rounding
-- Filters
-- Tint (mask)
-- Flip
-- Border
-- Shadow
-- Replace image
-- Reset image
-- Set as background
-#### Shapes
-- Draw any polygon
-- Draw any line (unclosed shape simulation)
-- Replace shape
-- Fill (solid color, gradient, image)
-- Border
-- Shadow
-- Transparency
-- Flip
-- Shape format painter
-- Edit text (supports rich text, similar to text element’s rich text editing)
-#### Lines
-- Straight lines, polylines, curves
-- Color
-- Width
-- Style (solid, dashed, dotted)
-- Endpoint style
-#### Charts (bar, column, line, area, scatter, pie, donut, radar)
-- Chart type conversion
-- Data editing
-- Background fill
-- Theme color
-- Coordinate system and axis text color
-- Grid color
-- Other chart settings
-- Border
-#### Tables
-- Add/delete rows and columns
-- Theme settings (theme color, header, total row, first column, last column)
-- Merge cells
-- Cell styles (fill color, text color, bold, italic, underline, strikethrough, alignment)
-- Border
-#### Video
-- Preview cover settings
-- Auto play
-#### Audio
-- Icon color
-- Auto play
-- Loop play
-#### Formulas
-- LaTeX editing
-- Color settings
-- Formula line thickness settings
-### Slide Show
-- Brush tools (pen/shape/arrow/highlighter annotation, eraser, blackboard mode)
-- Preview all slides
-- Bottom thumbnails navigation
-- Timer tool
-- Laser pointer
-- Auto play
-- Speaker view
-- Audience view
-### Mobile
-- Basic editing
-  - Add/delete/copy/note/undo redo pages
-  - Insert text, images, rectangles, circles
-  - General element operations: move, scale, rotate, copy, delete, layer adjust, align
-  - Element styles: text (bold, italic, underline, strikethrough, font size, color, alignment), fill color
-- Basic preview
-- Play preview
+```bash
+pnpm build
+```
 
+构建产物会输出到前端工程的 `dist/` 目录。
 
-# 👀 FAQ
-Some common problems: [FAQ](/doc/Q&A.md)
+### 启动后端
 
+后端为 Spring Cloud 多模块工程，启动前请先准备好 MySQL、Redis、Nacos，并根据本地环境调整各服务的 `application-dev.yml` 或 Nacos 配置。
 
-# 🎯 Supplement
-There is currently no complete development documentation, but the following documents may be of some help to you:
-- [Project Directory and Data Structure](/doc/DirectoryAndData.md)
-- [Fundamentals of Canvas and Elements](/doc/Canvas.md)
-- [How to Customize an Element](/doc/CustomElement.md)
-- [About AIPPT](/doc/AIPPT.md)
+常用启动模块包括：
 
-Here are some auxiliary development tools/repositories:
-- Import PPTX file reference: [pptxtojson](https://github.com/pipipi-pikachu/pptxtojson)
-- Draw shape: [svgPathCreator](https://github.com/pipipi-pikachu/svgPathCreator)
+- `gateway`
+- `service/ai-service`
+- `service/ppt-service`
+- `service/file-service`
+- 用户认证相关服务
 
+可在项目根目录执行 Maven 构建：
 
-# 📄 License
-[AGPL-3.0 License](https://github.com/pipipi-pikachu/PPTist/blob/master/LICENSE) | Copyright © 2020-PRESENT [pipipi-pikachu](https://github.com/pipipi-pikachu)
+```bash
+mvn clean package
+```
 
-# 🧮 Commercial
-If you wish to use this project for commercial gain, I hope you will respect open source and strictly adhere to the AGPL-3.0 license, giving back to the open source community. Or contact the author for an independent commercial license.
+也可以在 IDE 中分别启动对应服务的 Spring Boot 启动类。
 
+## 环境配置
 
+前端开发环境配置位于：
 
+```text
+Web/AI-PPT/.env.development
+```
 
+生产环境配置位于：
 
-# 🧮 商业用途
-- 本项目禁止闭源商用，如果你希望将其用于商业项目，请尊重开源，**严格遵循 [AGPL-3.0 协议](https://www.gnu.org/licenses/agpl-3.0.html)**，回馈开源社区；
-- 如果你因为任何原因，无法执行 AGPL-3.0 协议，可以选择：
-    1. 使用早期 Apache 2.0 协议版本（最后更新时间为2022年5月，已停止维护，[点击此处下载](https://github.com/pipipi-pikachu/PPTist/archive/f1a35bb8e045124e37dcafd6acbf40b4531b69aa.zip)）；
-    2. 成为项目的重要贡献者（先违反协议后再成为贡献者不适用此项），包括：
-        - 你的代码被本项目作为依赖引用，包括：npm安装、文件引用、代码片段引用（引用处会注明）；
-        - 你给本项目提交过重要的 PR 或 Issue（由作者主观判断，符合的 PR 或 Issue 会打上`important contribution`标签）；
-    3. [邮件联系作者](mailto:pipipi_pikachu@163.com)付费获取独立的商业授权（违反协议后被作者找到的不适用此项）。独立授权价格：
-        - 一年：2999元；
-        - 永久：5499元（不含税）；
-- 建议优先考虑执行AGPL-3.0协议，如需付费获取独立的商业授权，请务必在联系作者前阅读以下内容：
-    - **独立商业授权表示**：
-        - 作者单独出具商业授权协议文件（邮件联系作者获取），双方按流程签署协议；
-        - 允许将代码用于商业行为，且不必执行 AGPL-3.0 协议；
-        - 授权对象可以是个人或组织（企业），允许授权对象名下的所有产品使用本项目代码；
-    - **授权流程**：
-        1. 被授权方确认协议内容，若无异议，需提供协议中所需的个人/企业信息；
-        2. 由作者补充好协议双方信息后打印签字，并将电子扫描件发给被授权方；
-        3. 被授权方收到后，将协议打印盖章，再扫描电子档发回给作者，此时协议开始生效；
-        4. 被授权方在协议规定时间内支付费用，并保留好支付凭证，授权结束；
-    - **授权不等于出售软件或服务**：
-        - 不存在其他“商业版本”、不提供任何API/SDK/在线服务/技术支持/技术咨询/定制开发；
-        - 不提供可直接交付的产品，你仍需从本仓库获取代码自行开发；
-        - 该软件无法开箱即用，至少也得自行接入后端能力（使用本项目需要有最基本的web开发经验）；
-        - 不保证未来版本的兼容性，不保证代码没有bug；
-        - 作者不承担任何因使用本项目代码而导致的直接或间接损失；
-        - 务必提前做好调研，判断该软件是否符合需求，包括：功能（是否能满足业务需求）和开发（是否上手当前技术栈/实现方案）；
-- 不接受[黑名单/耻辱柱](/doc/Blacklist.md)或存在违反协议行为的对象通过任何形式获取商业授权；
-- 作者倡导异步沟通（正式、信息量大、信息整合度高），**不加私人微信/QQ/手机号等**，有任何授权相关疑问请邮件联系，谢谢理解；
-- 提需求/报bug/询问技术方案等非授权相关咨询，请在 [Issues](https://github.com/pipipi-pikachu/PPTist/issues) 中进行。
+```text
+Web/AI-PPT/.env.production
+```
 
+当前生产环境 API 基础路径示例：
 
-# 🔔 其他说明
-## 什么是 AGPL-3.0 协议
-协议的核心要求用通俗的语言解释如下：
-- **开源义务**：如果你用了 AGPL 的代码，无论你或你的下游怎么使用/修改，都必须把你最终的代码全部完整公开出来（不只是给出修改的部分，也不是说换个框架重写一遍就能和原始代码脱离关系了），并继续以 AGPL 协议开源（强调：必须延续 AGPL 协议，保持开源的传染性，不能更换其他协议）。
-- **网络服务也要开源**：即使你只是用 AGPL 的代码做了一个网站或网络服务，别人通过网络用你的服务时，你也需要遵守上一条**开源义务**。
-- **保留版权声明**：你不能删掉代码里原来的作者信息和许可证声明，得告诉大家这代码是从哪儿来的。
-- **不能加额外限制**：你不能在衍生出来的 AGPL 代码上加一些限制，比如不让别人再分发代码，或者要求别人付费才能使用代码（包括但不限于：要求别人购买授权/服务/产品等）。
-- **免责声明**：作者不保证代码没有 bug，也不对使用后果负责。
+```env
+VITE_APP_BASE_API=/api
+```
 
-> 详细协议内容见官方文档：[AGPL-3.0 协议](https://www.gnu.org/licenses/agpl-3.0.html)
+后端需要配置的常见内容包括：
 
-## 声明
-Github、Gitee等代码托管平台存在一些仓库基于本项目代码进行了二次开发，但未遵守AGPL-3.0协议，擅自删除了AGPL-3.0协议许可证声明或改用其他协议，作者在此提醒：**这些仓库的代码在事实上仍然属于AGPL-3.0协议，切勿受其误导。**
+- Nacos 服务发现与配置中心地址
+- MySQL 数据库连接
+- Redis 连接
+- 文件上传与访问路径
+- AI 模型供应商、模型名称、API Key 等配置
+
+请不要将真实密钥、生产数据库密码等敏感信息提交到公开仓库。
+
+## 核心接口能力
+
+### PPT 服务
+
+`ppt-service` 主要提供：
+
+- `POST /ppt/create`：创建 PPT 项目
+- `POST /ppt/save`：保存 PPT 项目
+- `GET /ppt/list`：获取项目列表
+- `GET /ppt/detail/{id}`：获取项目详情
+- `DELETE /ppt/delete/{id}`：移入回收站
+- `PUT /ppt/restore/{id}`：恢复项目
+- `DELETE /ppt/hardDelete/{id}`：彻底删除项目
+- `PUT /ppt/star/{id}`：收藏/取消收藏
+- `GET /ppt/templates`：获取 PPT 模板
+- `POST /ppt/outline`：流式生成 PPT 大纲
+- `POST /ppt/generate`：流式生成幻灯片内容
+- `POST /ppt/writing`：AI 文案处理
+- `POST /ppt/image`：AI 图片生成
+
+### AI 服务
+
+`ai-service` 主要提供：
+
+- `GET /ai/models`：获取可用模型列表
+- `POST /ai/writing`：AI 文本流式处理
+- `POST /ai/document-to-ppt`：文档转 PPT 大纲
+- `POST /ai/image`：AI 生图
+
+## 常用命令
+
+### 前端
+
+```bash
+pnpm dev
+pnpm build
+pnpm preview
+pnpm lint
+```
+
+### 后端
+
+```bash
+mvn clean package
+mvn clean install
+```
+
+## 使用流程
+
+1. 启动后端基础服务、网关和 AI/PPT/File 相关服务。
+2. 启动 `Web/AI-PPT` 前端工程。
+3. 在首页创建 PPT 项目，或选择已有项目继续编辑。
+4. 输入主题、文档或创作要求，生成 PPT 大纲。
+5. 根据大纲生成幻灯片内容。
+6. 在编辑器中调整版式、文字、图片、图表和动画。
+7. 保存项目或导出为 PPTX 文件。
+
+## 项目亮点
+
+- 前后端分离，便于独立部署和扩展
+- AI 生成过程采用流式返回，前端体验更接近实时生成
+- PPT 内容以结构化 JSON 保存，便于二次编辑和持久化
+- 支持主题生成、文档生成、编辑器手动创作等多种创作路径
+- 保留 PPTist 强大的 Web 幻灯片编辑体验
+- 后端通过微服务拆分 AI、PPT、文件等能力，职责清晰
+
+## 注意事项
+
+- 本项目包含 AI 能力，实际使用前需要配置可用的模型服务和密钥。
+- PPTX 导出会尽量还原编辑器内容，但复杂样式与 Office 原生效果可能存在差异。
+- 如果公开发布仓库，请检查 `.env`、配置文件、日志和上传目录，避免泄露敏感信息。
+- 本项目基于 PPTist 二次开发，请遵守原项目的开源协议要求。
+
+## 致谢与开源协议
+
+本项目的前端编辑器基于 [PPTist](https://github.com/pipipi-pikachu/PPTist) 二次开发。PPTist 是一个优秀的 Web 幻灯片编辑/演示应用，提供了丰富的 PPT 编辑能力。
+
+PPTist 使用 AGPL-3.0 License。基于其代码进行修改、分发或作为网络服务提供时，请严格遵守 AGPL-3.0 协议要求，保留原作者版权声明和许可证信息。
+
+本仓库中的相关代码请以仓库内 `LICENSE` 文件及各模块声明为准。

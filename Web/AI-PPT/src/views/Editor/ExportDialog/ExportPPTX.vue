@@ -69,7 +69,7 @@
       <Button class="btn close" @click="emit('close')">关闭</Button>
     </div>
 
-    <FullscreenSpin :loading="exporting" tip="正在导出..." />
+    <ExportProgress :exporting="exporting" :progress="exportProgress" :logs="exportLogs" />
   </div>
 </template>
 
@@ -81,6 +81,7 @@ import useExport from '@/hooks/useExport'
 
 import ThumbnailSlide from '@/views/components/ThumbnailSlide/index.vue'
 import FullscreenSpin from '@/components/FullscreenSpin.vue'
+import ExportProgress from '@/components/ExportProgress.vue'
 import Switch from '@/components/Switch.vue'
 import Slider from '@/components/Slider.vue'
 import Button from '@/components/Button.vue'
@@ -93,7 +94,7 @@ const emit = defineEmits<{
 
 const { slides, currentSlide } = storeToRefs(useSlidesStore())
 
-const { exportPPTX, exportImagePPTX, exporting } = useExport()
+const { exportPPTX, exportImagePPTX, exporting, exportProgress, exportLogs } = useExport()
 
 const imageThumbnailsRef = useTemplateRef<HTMLElement>('imageThumbnailsRef')
 const rangeType = ref<'all' | 'current' | 'custom'>('all')

@@ -756,6 +756,10 @@ export interface Slide {
   turningMode?: TurningMode
   sectionTag?: SectionTag
   type?: SlideType
+  /** AI 生成时关联的模板文件路径 (如 /templates/template_1.json) */
+  styleKey?: string
+  /** AI 生成时使用的版式在模板中的原始 ID */
+  layoutId?: string
 }
 
 /**

@@ -347,21 +347,52 @@ export default () => {
       })
     })
 
-    // 1. 尝试在当前模板内部寻找替代品 (排除掉当前正在使用的 layoutId)
-    let candidateTemplates = currentTemplateSlides.filter(t => t.type === slide.type && t.id !== (slide as any).layoutId)
+    // 当前页面的数据项数量，用于筛选候选布局（避免数据丢失）
+    const currentItemCount = contentData.items.length
 
-    // 2. 如果当前模板没有其他同类型版式，则随机挑选一个其他模板库的同类型版式
-    if (!candidateTemplates.length) {
-      const otherTemplates = slidesStore.templates.filter(t => t.id !== slide.styleKey)
-      const randomOtherTemplateId = otherTemplates[Math.floor(Math.random() * otherTemplates.length)].id
-      const otherTemplateData = await api.getTemplateData(randomOtherTemplateId)
-      candidateTemplates = otherTemplateData.slides.filter((t: Slide) => t.type === slide.type)
+    // 筛选候选布局：类型匹配 + 排除当前版式 + item 插槽数量 >= 当前数据项数量
+    const filterCandidates = (templates: Slide[]) => {
+      return templates.filter(t => {
+        if (t.type !== slide.type) return false
+        if (t.id === (slide as any).layoutId) return false
+        // 统计模板中 item 类型元素的数量
+        const itemSlots = t.elements.filter(el => checkTextType(el, 'item')).length
+        // 只允许 item 插槽 >= 当前数据项数量的布局，防止数据丢失
+        // 对于没有 item 的页面类型（如封面、结束页），不做此限制
+        if (currentItemCount > 0 && itemSlots < currentItemCount) return false
+        return true
+      })
     }
 
-    if (!candidateTemplates.length) return
+    // 1. 尝试在当前模板内部寻找替代品
+    let candidateTemplates = filterCandidates(currentTemplateSlides)
+
+    // 2. 如果当前模板没有合适的版式，则从其他模板库中寻找
+    if (!candidateTemplates.length) {
+      let currentFileUrl = slide.styleKey || ''
+      if (!currentFileUrl.includes('/')) {
+        const matched = slidesStore.templates.find((t: any) => t.id === currentFileUrl)
+        currentFileUrl = matched?.fileUrl || ''
+      }
+      const otherTemplates = slidesStore.templates.filter((t: any) => t.fileUrl && t.fileUrl !== currentFileUrl)
+      for (const other of otherTemplates) {
+        try {
+          const otherTemplateData = await api.getTemplateData(other.fileUrl!)
+          candidateTemplates = filterCandidates(otherTemplateData.slides)
+          if (candidateTemplates.length) break
+        } catch (err) {
+          continue
+        }
+      }
+    }
+
+    if (!candidateTemplates.length) {
+      console.warn(`未找到可容纳 ${currentItemCount} 个数据项的同类型布局`)
+      return
+    }
 
     const newTemplate = candidateTemplates[Math.floor(Math.random() * candidateTemplates.length)]
-    const newSlide = renderSingleSlide(newTemplate, { type: slide.type, data: contentData, remark: slide.remark || '' }, slide.styleKey || 'template_1', undefined)
+    const newSlide = renderSingleSlide(newTemplate, { type: slide.type, data: contentData, remark: slide.remark || '' }, slide.styleKey || '', undefined)
     
     // 重要修复：正确调用 updateSlide，使用 (props, slideId) 签名
     slidesStore.updateSlide({

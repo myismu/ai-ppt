@@ -19,7 +19,7 @@
 ### 2.1 `ai-service` (AI 能力调度中心)
 **核心职责**：屏蔽底层大模型协议差异，为全系统提供统一的 AI 指令服务。
 - **大模型适配器 (Adapter Pattern)**：
-  - `XiaomiMimoAdapter`: 封装 WebClient 调用小米 MIMO 的 Anthropic Messages 协议。
+  - `AnthropicAdapter`: 封装 WebClient 调用大模型的 Anthropic Messages 协议。
   - `DoubaoImageAdapter`: 封装对字节跳动（火山引擎）生图接口的 REST 调用。
 - **流式响应中转**：利用 Spring Boot `SseEmitter` 将大模型的流式文本中转至前端。
 - **Prompt 管理**：统一维护“大纲生成”、“内容扩写”、“提示词工程化转换”等系统级 Prompt。
