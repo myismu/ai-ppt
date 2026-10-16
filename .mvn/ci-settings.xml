@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- CI 专用：声明平台制品仓库（包为公开，无需认证） -->
+<!-- CI 专用 Maven 配置：
+     1) 声明平台制品仓库（cloud-platform 发布的 common/api/父 pom）
+     2) 通过环境变量注入 GitHub Packages 凭据（GitHub 的 Maven 注册表始终要求认证） -->
 <settings>
+  <servers>
+    <server>
+      <id>github</id>
+      <username>${env.GITHUB_ACTOR}</username>
+      <password>${env.GITHUB_TOKEN}</password>
+    </server>
+  </servers>
   <profiles>
     <profile>
       <id>github-packages</id>
