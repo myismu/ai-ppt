@@ -11,9 +11,11 @@ import java.io.Serializable;
 public class AiWritingFeignRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String content;
+    private Long modelId;// 模型id
 
-    private String type;
+    private String content;// 文本内容
 
-    private String instruction;
+    private String type;//  类型
+
+    private String instruction;// 指令
 }

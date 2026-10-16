@@ -15,6 +15,8 @@ public class PptWritingRequest implements Serializable {
 
     private String command;
 
+    private Long modelId;
+
     private String model;
 
     private Boolean stream;

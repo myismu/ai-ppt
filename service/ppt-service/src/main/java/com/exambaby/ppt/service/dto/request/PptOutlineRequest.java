@@ -11,11 +11,13 @@ import java.io.Serializable;
 public class PptOutlineRequest implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String content;
+    private String content;// 内容
 
-    private String language;
+    private String language;// 语言
 
-    private String model;
+    private Long modelId;// 模型 ID
 
-    private Boolean stream;
+    private String model;// 模型
+
+    private Boolean stream;// 流式
 }

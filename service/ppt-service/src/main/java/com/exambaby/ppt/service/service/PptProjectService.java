@@ -68,4 +68,19 @@ public interface PptProjectService extends IService<PptProject> {
      * @return 是否成功
      */
     boolean hardDeleteProject(Long userId, Long projectId);
+
+    /**
+     * 切换项目收藏状态
+     * @param userId 用户 ID
+     * @param projectId 项目 ID
+     * @return 切换后的收藏状态 (0 或 1)
+     */
+    Integer toggleStar(Long userId, Long projectId);
+
+    /**
+     * 获取用户收藏的项目列表
+     * @param userId 用户 ID
+     * @return 收藏项目列表
+     */
+    List<PptProjectVO> listStarredProjects(Long userId);
 }

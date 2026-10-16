@@ -19,11 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -52,7 +51,8 @@ public class PptStreamServiceImpl implements PptStreamService {
     @Override
     public void streamPlainText(PptOutlineRequest request, HttpServletResponse response) {
         AiWritingFeignRequest aiRequest = new AiWritingFeignRequest();
-        aiRequest.setInstruction(PptPromptBuilder.buildOutlinePrompt(request.getContent(), request.getLanguage()));
+        aiRequest.setModelId(request.getModelId());// 模型 ID
+        aiRequest.setInstruction(PptPromptBuilder.buildOutlinePrompt(request.getContent(), request.getLanguage()));// 构建 Prompt
         doStreamPlainTextToResponse(aiRequest, response);
     }
 
@@ -62,6 +62,7 @@ public class PptStreamServiceImpl implements PptStreamService {
     @Override
     public void streamWritingText(PptWritingRequest request, HttpServletResponse response) {
         AiWritingFeignRequest aiRequest = new AiWritingFeignRequest();
+        aiRequest.setModelId(request.getModelId());
         aiRequest.setInstruction(PptPromptBuilder.buildWritingPrompt(request.getContent(), request.getCommand()));
         doStreamPlainTextToResponse(aiRequest, response);
     }
@@ -72,6 +73,7 @@ public class PptStreamServiceImpl implements PptStreamService {
     @Override
     public void streamSlides(PptGenerateRequest request, HttpServletResponse response) {
         AiWritingFeignRequest aiRequest = new AiWritingFeignRequest();
+        aiRequest.setModelId(request.getModelId());
         aiRequest.setInstruction(PptPromptBuilder.buildSlidesPrompt(request.getContent(), request.getLanguage(), request.getStyle()));
         doStreamJsonlToResponse(aiRequest, response);
     }
@@ -80,22 +82,23 @@ public class PptStreamServiceImpl implements PptStreamService {
      * 执行纯文本流式转发
      */
     private void doStreamPlainTextToResponse(AiWritingFeignRequest request, HttpServletResponse response) {
-        response.setContentType("text/event-stream");
-        response.setCharacterEncoding("UTF-8");
-        response.setHeader("Cache-Control", "no-cache");
-        response.setHeader("X-Accel-Buffering", "no");
+        // 设置响应头
+        response.setContentType("text/event-stream");// 设置响应类型为 SSE
+        response.setCharacterEncoding("UTF-8");// 设置响应编码为 UTF-8
+        response.setHeader("Cache-Control", "no-cache");// 禁用缓存
+        response.setHeader("X-Accel-Buffering", "no");// 禁用网关和 Nginx 的缓冲
         
-        try (OutputStream out = response.getOutputStream()) {
+        try (OutputStream out = response.getOutputStream()) {// 创建输出流，用于将 SSE 响应数据写入响应体，给客户端提示进度信息
             sendSseMessage(out, SseMessage.status("正在连接 AI 创作中心..."));
             sendSseMessage(out, SseMessage.status("分析创作意图并构建 Prompt..."));
 
             restTemplate.execute(buildWritingUrl(), HttpMethod.POST, clientHttpRequest -> {
-                clientHttpRequest.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                clientHttpRequest.getHeaders().setAccept(MediaType.parseMediaTypes(MediaType.TEXT_EVENT_STREAM_VALUE));
-                clientHttpRequest.getBody().write(toJsonBytes(request));
+                clientHttpRequest.getHeaders().setContentType(MediaType.APPLICATION_JSON);// 设置请求头
+                clientHttpRequest.getHeaders().setAccept(MediaType.parseMediaTypes(MediaType.TEXT_EVENT_STREAM_VALUE));// 设置响应类型为 SSE
+                clientHttpRequest.getBody().write(toJsonBytes(request));// 将请求参数写入请求体
             }, (ResponseExtractor<Void>) httpResponse -> {
                 sendSseMessage(out, SseMessage.status("AI 模型已响应，开始流式生成内容..."));
-                streamAsSseMessage(httpResponse, out);
+                streamAsSseMessage(httpResponse, out); // 将 SSE 响应流转换为 SseMessage
                 sendSseMessage(out, SseMessage.status("生成完成！"));
                 return null;
             });
@@ -109,16 +112,16 @@ public class PptStreamServiceImpl implements PptStreamService {
      * 将 SSE 响应包装为 SseMessage 格式输出
      */
     private void streamAsSseMessage(ClientHttpResponse response, OutputStream out) throws IOException {
-        java.io.InputStream in = response.getBody();
-        byte[] buffer = new byte[1024];
+        InputStream in = response.getBody();
+        byte[] buffer = new byte[1024];// 缓冲区大小
         int len;
-        java.io.ByteArrayOutputStream lineBuffer = new java.io.ByteArrayOutputStream();
-        java.util.List<String> eventData = new java.util.ArrayList<>();
+        ByteArrayOutputStream lineBuffer = new ByteArrayOutputStream();// 存储一行数据
+        List<String> eventData = new ArrayList<>(); // 存储事件数据
         
-        while ((len = in.read(buffer)) != -1) {
+        while ((len = in.read(buffer)) != -1) {// 读取数据
             for (int i = 0; i < len; i++) {
                 byte b = buffer[i];
-                if (b == '\n') {
+                if (b == '\n') { // 遇到换行符
                     String line = lineBuffer.toString(StandardCharsets.UTF_8);
                     lineBuffer.reset();
                     
@@ -271,6 +274,7 @@ public class PptStreamServiceImpl implements PptStreamService {
 
     private byte[] toJsonBytes(AiWritingFeignRequest request) {
         String json = "{"
+                + (request.getModelId() != null ? "\"modelId\":" + request.getModelId() + "," : "")
                 + "\"content\":" + quote(request.getContent()) + ","
                 + "\"type\":" + quote(request.getType()) + ","
                 + "\"instruction\":" + quote(request.getInstruction())
@@ -287,6 +291,10 @@ public class PptStreamServiceImpl implements PptStreamService {
         return "\"" + escaped + "\"";
     }
 
+    /**
+     *  构建 API URL
+     * @return API URL
+     */
     private String buildWritingUrl() {
         return pptAiProperties.getBaseUrl().replaceAll("/+$", "") + "/ai/writing";
     }

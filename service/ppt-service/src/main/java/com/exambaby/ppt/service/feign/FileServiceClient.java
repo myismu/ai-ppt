@@ -34,4 +34,12 @@ public interface FileServiceClient {
      */
     @DeleteMapping("/file/delete/project/{projectId}")
     ApiResponse<String> deleteProjectFiles(@PathVariable("projectId") String projectId);
+
+    /**
+     * 聚合计算多个项目的文件总大小（字节）
+     * @param projectIds 项目 ID 列表
+     * @return 文件总大小（字节数的字符串）
+     */
+    @PostMapping("/file/storage/total-size")
+    ApiResponse<String> getProjectsTotalSize(@RequestBody java.util.List<String> projectIds);
 }

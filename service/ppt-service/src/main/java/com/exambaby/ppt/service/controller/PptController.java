@@ -1,5 +1,6 @@
 package com.exambaby.ppt.service.controller;
 
+import com.exambaby.common.core.domain.ApiResponse;
 import com.exambaby.common.core.result.Result;
 import com.exambaby.common.core.utils.ThreadLocalContext;
 import com.exambaby.ppt.service.dto.request.PptCreateRequest;
@@ -12,6 +13,7 @@ import com.exambaby.ppt.service.dto.response.ImageUrlResponse;
 import com.exambaby.ppt.service.dto.response.PptIdVO;
 import com.exambaby.ppt.service.dto.response.PptProjectDetailVO;
 import com.exambaby.ppt.service.dto.response.PptProjectVO;
+import com.exambaby.ppt.service.feign.FileServiceClient;
 import com.exambaby.ppt.service.service.PptGenerationService;
 import com.exambaby.ppt.service.service.PptProjectService;
 import com.exambaby.ppt.service.service.PptStreamService;
@@ -32,8 +34,32 @@ public class PptController {
     private final PptGenerationService pptGenerationService;
     private final PptStreamService pptStreamService;
     private final PptProjectService pptProjectService;
+    private final FileServiceClient fileServiceClient;
+    private final com.exambaby.ppt.service.feign.AiServiceClient aiServiceClient;
+    private final com.exambaby.ppt.service.service.PptConfigOptionService pptConfigOptionService;
 
     // ==================== 项目 CRUD 接口 ====================
+
+    /**
+     * 获取创作引擎配置选项（语言、风格、推荐主题）
+     * 一次性返回全部分类，减少前端请求次数
+     */
+    @GetMapping({"/tools/config-options", "/ppt/config-options"})
+    public Result<java.util.Map<String, java.util.List<String>>> configOptions() {
+        return Result.success(pptConfigOptionService.listAllGrouped());
+    }
+
+    /**
+     * 获取指定场景的模型列表（代理转发 ai-service）
+     */
+    @GetMapping({"/tools/models", "/ppt/models"})
+    public Result<Object> models(@RequestParam(value = "sceneType", defaultValue = "text") String sceneType) {
+        ApiResponse<Object> response = aiServiceClient.getAvailableModels(sceneType);
+        if (response != null && response.getCode() == 200) {
+            return Result.success(response.getData());
+        }
+        return Result.error("获取模型列表失败");
+    }
 
     /**
      * 创建 PPT 项目
@@ -130,6 +156,67 @@ public class PptController {
         Long userId = resolveUserId();
         boolean success = pptProjectService.hardDeleteProject(userId, id);
         return Result.success(success);
+    }
+
+    /**
+     * 切换项目收藏状态（星标）
+     * 
+     * @param id 项目 ID
+     * @return 切换后的收藏状态 (0 或 1)
+     */
+    @PutMapping("/ppt/star/{id}")
+    public Result<Integer> toggleStar(@PathVariable Long id) {
+        Long userId = resolveUserId();
+        Integer newStar = pptProjectService.toggleStar(userId, id);
+        if (newStar == null) {
+            return Result.error("项目不存在或无权限");
+        }
+        return Result.success(newStar);
+    }
+
+    /**
+     * 获取用户收藏的项目列表
+     * 
+     * @return 收藏项目列表
+     */
+    @GetMapping("/ppt/starred")
+    public Result<List<PptProjectVO>> starred() {
+        Long userId = resolveUserId();
+        return Result.success(pptProjectService.listStarredProjects(userId));
+    }
+
+    /**
+     * 获取用户云存储空间使用情况
+     * 聚合计算用户所有项目关联的文件资源总大小
+     * 
+     * @return 存储使用信息 Map (usedBytes, usedMB)
+     */
+    @GetMapping("/ppt/storage")
+    public Result<java.util.Map<String, Object>> storage() {
+        Long userId = resolveUserId();
+        // 获取用户所有项目 ID
+        List<PptProjectVO> projects = pptProjectService.listProjects(userId, null);
+        List<String> projectIds = projects.stream()
+                .map(p -> String.valueOf(p.getId()))
+                .collect(java.util.stream.Collectors.toList());
+
+        // 获取项目关联的文件资源总大小
+        long totalBytes = 0;
+        if (!projectIds.isEmpty()) {
+            try {
+                var response = fileServiceClient.getProjectsTotalSize(projectIds);// 调用 file-service
+                if (response != null && response.getCode() == 200 && response.getData() != null) { // 响应成功
+                    totalBytes = Long.parseLong(response.getData());// 转换为字节
+                }
+            } catch (Exception e) {
+                // file-service 不可用时降级为 0
+            }
+        }
+        // 转换为 MB
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("usedBytes", totalBytes);
+        result.put("usedMB", Math.round(totalBytes / 1024.0 / 1024.0 * 100.0) / 100.0);
+        return Result.success(result);
     }
 
     // ==================== AI 生成接口 ====================

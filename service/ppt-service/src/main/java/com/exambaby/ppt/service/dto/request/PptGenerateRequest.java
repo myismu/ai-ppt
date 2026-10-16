@@ -17,6 +17,8 @@ public class PptGenerateRequest implements Serializable {
 
     private String style;
 
+    private Long modelId;
+
     private String model;
 
     private Boolean stream;

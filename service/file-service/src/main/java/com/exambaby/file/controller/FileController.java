@@ -173,6 +173,31 @@ public class FileController {
     }
 
     /**
+     * 聚合计算多个项目的文件总大小（字节）
+     * 遍历 upload/projects/{projectId} 目录下所有文件，累加大小
+     *
+     * @param projectIds 项目 ID 列表
+     * @return 文件总大小（字节数字符串）
+     */
+    @PostMapping("/storage/total-size")
+    public ApiResponse<String> getProjectsTotalSize(@RequestBody java.util.List<String> projectIds) {
+        long totalSize = 0;
+        for (String projectId : projectIds) {
+            Path projectDir = resolveBasePath().resolve("projects").resolve(projectId);
+            if (Files.exists(projectDir) && Files.isDirectory(projectDir)) {
+                try (Stream<Path> paths = Files.walk(projectDir)) {
+                    totalSize += paths.filter(Files::isRegularFile)
+                            .mapToLong(p -> {
+                                try { return Files.size(p); } catch (IOException e) { return 0; }
+                            })
+                            .sum();
+                } catch (IOException ignored) {}
+            }
+        }
+        return ApiResponse.success(String.valueOf(totalSize));
+    }
+
+    /**
      * 解析 base-dir 为绝对路径
      */
     private Path resolveBasePath() {
