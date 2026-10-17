@@ -11,7 +11,7 @@
     └── ppt-service    - PPT 服务：项目持久化、生成编排
 
 依赖说明：
-- 父 pom（com.exambaby:cloud）与公共库 common 来自平台仓库发布的
+- 父 pom（com.exambaby:cloud-platform）与公共库 common 来自平台仓库发布的
   GitHub Packages 制品，版本由父 pom 的 platform.libs.version 统一管理
 - 用户中心 / 文件服务 / 统一网关由平台统一部署，本仓库不包含其代码
 ============================================================
@@ -26,8 +26,8 @@
     <!-- relativePath 置空：始终从制品仓库解析父 pom，而不是本地相对路径 -->
     <parent>
         <groupId>com.exambaby</groupId>
-        <artifactId>cloud</artifactId>
-        <version>1.0.1</version>
+        <artifactId>cloud-platform</artifactId>
+        <version>1.0.2</version>
         <relativePath/>
     </parent>
 
