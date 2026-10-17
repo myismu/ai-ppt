@@ -11,7 +11,7 @@
       <slot name="prefix"></slot>
     </span>
     <input
-      type="text"
+      :type="type"
       ref="inputRef"
       :disabled="disabled"
       :value="value" 
@@ -39,10 +39,12 @@ withDefaults(defineProps<{
   placeholder?: string
   simple?: boolean
   maxlength?: number
+  type?: string
 }>(), {
   disabled: false,
   placeholder: '',
   simple: false,
+  type: 'text',
 })
 
 const emit = defineEmits<{

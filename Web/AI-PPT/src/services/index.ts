@@ -1,12 +1,12 @@
 import axios from './axios'
 import fetchRequest from './fetch'
 
-// export const SERVER_URL = 'http://localhost:5000'
-export const SERVER_URL = (import.meta.env.MODE === 'development') ? '/api' : 'https://server.pptist.cn'
+// 统一走同源相对路径：开发环境由 Vite proxy 转发，生产环境由容器内 nginx 转发到 gateway
+export const SERVER_URL = '/api'
 
 // 静态资源基础路径（走网关 → file-service）
-// 开发环境通过 Vite proxy 转发，生产环境直接指向网关地址
-export const STATIC_URL = (import.meta.env.MODE === 'development') ? '' : 'https://server.pptist.cn'
+// 开发环境由 Vite proxy 转发，生产环境由 nginx 代理 /templates、/projects、/img、/image
+export const STATIC_URL = ''
 
 interface ImageSearchPayload {
   query: string;
