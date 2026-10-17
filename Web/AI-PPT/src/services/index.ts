@@ -1,8 +1,9 @@
 import axios from './axios'
 import fetchRequest from './fetch'
 
-// 统一走同源相对路径：开发环境由 Vite proxy 转发，生产环境由容器内 nginx 转发到 gateway
-export const SERVER_URL = '/api'
+// 接口前缀由 axios baseURL / fetch 的 VITE_APP_BASE_API 提供（生产为 /api），
+// 这里不再重复拼接，避免出现 /api/api/...
+export const SERVER_URL = ''
 
 // 静态资源基础路径（走网关 → file-service）
 // 开发环境由 Vite proxy 转发，生产环境由 nginx 代理 /templates、/projects、/img、/image
@@ -53,7 +54,8 @@ export default {
   getTemplateData(path: string): Promise<any> {
     // 如果 path 已经是以 .json 结尾的完整路径，则直接请求
     const url = path.endsWith('.json') ? `${STATIC_URL}${path}` : `${STATIC_URL}/templates/${path}.json`
-    return axios.get(url)
+    // 静态资源不走 axios 的 /api baseURL，直接请求同源路径
+    return axios.get(url, { baseURL: '' })
   },
 
   searchImage(body: ImageSearchPayload): Promise<any> {
